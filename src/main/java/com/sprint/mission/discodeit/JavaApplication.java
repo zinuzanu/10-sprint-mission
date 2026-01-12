@@ -10,88 +10,86 @@ import com.sprint.mission.discodeit.service.jcf.JCFChannelService;
 import com.sprint.mission.discodeit.service.jcf.JCFMessageService;
 import com.sprint.mission.discodeit.service.jcf.JCFUserService;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.UUID;
 
 public class JavaApplication {
     public static void main(String[] args) {
-        // 각 도메인 클래스 인스턴스화
+        // 1. 서비스 초기화
         UserService userService = new JCFUserService();
         ChannelService channelService = new JCFChannelService();
-        MessageService messageService = new JCFMessageService();
+        MessageService messageService = new JCFMessageService(userService, channelService);
 
-        // [유저 테스트 시작] 유저 생성 및 저장(Create)
-        User user1 = new User("김진우", "wsx104301@naver.com");
-        userService.create(user1);
+        // [USER TEST]
+        System.out.println(">>> [USER TEST]");
+        try {
+            User user1 = new User("김진우", "wsx104301@naver.com");
+            userService.create(user1);
+            User user2 = new User("김호야", "hoya@naver.com");
+            userService.create(user2);
 
-        User user2 = new User("김호야", "hoya@naver.com");
-        userService.create(user2);
+            System.out.println("[출력] 다건 조회: " + userService.findAll());
 
-        User user3 = new User("김꼬야", "kkoya@naver.com");
-        userService.create(user3);
+            // 예외 케이스 테스트
+            runTest("유저 이름 공백", "   ", () -> new User("   ", "error@test.com"));
+            runTest("이름 내 공백 포함", "김 진우", () -> new User("김 진우", "error@test.com"));
+            runTest("이메일 중복 (Service)", "wsx104301@naver.com", () -> userService.create(new User("중복맨", "wsx104301@naver.com")));
 
-        // 1번 유저 Id 조회, 전체 유저 Id 조회 (Read)
-        System.out.println("단건 조회: " + userService.findById(user1.getId()));
-        System.out.println("다건 조회: " + userService.findAll());
-
-        // 1번 유저 정보 수정 (Update)
-        user1.updateUser("김진짜누", "realzinu@gmail.com");
-        userService.update(user1.getId(), user1);
-        System.out.println("수정 후 정보: " + user1);
-
-        // 1번 유저 삭제 (Delete)
-        userService.delete(user1.getId());
-        System.out.println("다건 조회: " + userService.findAll());
-
-        // [유저 테스트 종료]
+            user1.updateUser("김진짜누", "realzinu@gmail.com");
+            userService.update(user1.getId(), user1);
+            System.out.println("[출력] 수정 후 정보: " + user1);
+        } catch (Exception e) {
+            System.out.println("[예외발생] 유저 섹션 내부 오류 | 원인: " + e.getMessage());
+        }
         System.out.println("=".repeat(100));
 
+        // [CHANNEL TEST]
+        System.out.println(">>> [CHANNEL TEST]");
+        try {
+            Channel channel1 = new Channel("자바 공부방");
+            channelService.create(channel1);
 
-        // [채널 테스트 시작] 채널 생성 및 저장(Create)
-        Channel channel1 = new Channel("김진우의 채널");
-        channelService.create(channel1);
-
-        Channel channel2 = new Channel("김호야의 채널");
-        channelService.create(channel2);
-
-        // 2번 채널 Id 조회, 전체 채팅방 Id 조회 (Read)
-        System.out.println("단건 조회: " + channelService.findById(channel2.getId()));
-        System.out.println("다건 조회: " + channelService.findAll());
-
-        // 1번 채널 정보 수정 (Update)
-        channel1.updateChannel("김꼬야의 채널");
-        channelService.update(channel1.getId(), channel1);
-        System.out.println("수정 후 정보: " + channel1);
-
-        // 1번 채널 삭제 (Delete)
-        channelService.delete(channel1.getId());
-        System.out.println("다건 조회: " + channelService.findAll());
-
-        // [채널 테스트 종료]
+            runTest("채널 이름 미달", "자", () -> new Channel("자"));
+            System.out.println("[출력] 단건 조회: " + channelService.findById(channel1.getId()));
+        } catch (Exception e) {
+            System.out.println("[예외발생] 채널 섹션 내부 오류 | 원인: " + e.getMessage());
+        }
         System.out.println("=".repeat(100));
 
-        // [메시지 테스트 시작] 메시지 생성 및 저장 (Create)
-        Message message1 = new Message(user2.getId(), channel2.getId(), "나는 김호야다! 날 키워라!");
-        messageService.create(message1);
+        // [MESSAGE TEST]
+        System.out.println(">>> [MESSAGE TEST]");
+        try {
+            // 안전하게 존재하는 데이터 참조
+            User activeUser = userService.findAll().get(0);
+            Channel activeChannel = channelService.findAll().get(0);
 
-        Message message2 = new Message(user3.getId(), channel2.getId(), "나는 김꼬야다! 고개를 조아려라!");
-        messageService.create(message2);
+            Message message1 = new Message(activeUser.getId(), activeChannel.getId(), "안녕하세요!");
+            messageService.create(message1);
 
-        // 메시지 조회 (Read)
-        System.out.println("채널 내 메시지 목록: " + messageService.findAll());
-        System.out.println("메시지 단건 조회: " + messageService.findById(message1.getId()));
+            runTest("메시지 내용 빈값", "\" \"", () -> new Message(activeUser.getId(), activeChannel.getId(), "  "));
 
-        // 메시지 내용 수정 (Update)
-        message1.updateMessage("냥냥냥냥냥~");
-        messageService.update(message1.getId(), message1);
-        System.out.println("수정된 메시지: " + messageService.findById(message1.getId()));
+            UUID unknownId = UUID.randomUUID();
+            runTest("존재하지 않는 유저 참조", unknownId.toString(), () -> {
+                messageService.create(new Message(unknownId, activeChannel.getId(), "누구세요?"));
+            });
 
-        // 메시지 삭제 (Delete)
-        messageService.delete(message2.getId());
-        System.out.println("삭제 후 메시지 목록: " + messageService.findAll());
+            System.out.println("[출력] 메시지 목록: " + messageService.findAll());
+        } catch (Exception e) {
+            System.out.println("[예외발생] 메시지 섹션 내부 오류 | 원인: " + e.getMessage());
+        }
 
-        // [메시지 테스트 종료]
         System.out.println("=".repeat(100));
+        System.out.println("[출력] 모든 테스트가 완료되었습니다.");
+    }
+
+    /**
+     * 예외 테스트용 헬퍼 메서드
+     */
+    private static void runTest(String title, String input, Runnable action) {
+        try {
+            action.run();
+            System.out.println("[실패] " + title + " : 예외가 발생하지 않았습니다.");
+        } catch (Exception e) {
+            System.out.printf("[예외발생] %-20s | 입력값: [%s] | 원인: %s%n", title, input, e.getMessage());
+        }
     }
 }
