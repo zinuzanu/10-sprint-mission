@@ -7,7 +7,7 @@ public abstract class BaseEntity {
     private final Long createdAt;
     private Long updatedAt;
 
-    public BaseEntity() { // 필드 초기화
+    protected BaseEntity() { // 필드 초기화
         this.id = UUID.randomUUID();
         this.createdAt = System.currentTimeMillis();
     }

@@ -27,7 +27,7 @@ public class JCFMessageService implements MessageService {
         User user = userService.findById(userId);
         Channel channel = channelService.findById(channelId);
 
-        if (channel.getMemberIds().contains(userId)) {
+        if (!channel.getMembers().contains(user)) {
             throw new IllegalStateException("해당 채널에 속해 있지 않으므로 메세지를 보낼 수 없습니다.");
         }
 

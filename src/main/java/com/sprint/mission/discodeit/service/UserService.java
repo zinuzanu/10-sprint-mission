@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.service;
 
+import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 
 import java.util.List;
@@ -11,4 +13,7 @@ public interface UserService {
     List<User> findAll();
     User update(UUID id, String userNickname);
     void delete(UUID id);
+
+    List<Channel> findMyChannels(UUID userId);
+    List<Message> findMyMessages(UUID userId);
 }

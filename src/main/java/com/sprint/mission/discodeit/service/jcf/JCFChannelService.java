@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.UserService;
 
@@ -51,16 +53,26 @@ public class JCFChannelService implements ChannelService {
     }
 
     @Override
-    public void joinUser(UUID channelId, UUID userId) {
-        Channel channel = findById(channelId);
-        userService.findById(userId);
-        channel.join(userId);
+    public List<User> findMembers(UUID channelId) {
+        return findById(channelId).getMembers();
     }
 
     @Override
-    public void leaveUser(UUID channelId, UUID userId) {
+    public List<Message> findMessages(UUID channelId) {
+        return findById(channelId).getMessages();
+    }
+
+    @Override
+    public void addMember(UUID channelId, UUID userId) {
         Channel channel = findById(channelId);
-        userService.findById(userId);
-        channel.leave(userId);
+        User user = userService.findById(userId);
+        channel.addMember(user);
+    }
+
+    @Override
+    public void removeMember(UUID channelId, UUID userId) {
+        Channel channel = findById(channelId);
+        User user = userService.findById(userId);
+        channel.removeMember(user);
     }
 }

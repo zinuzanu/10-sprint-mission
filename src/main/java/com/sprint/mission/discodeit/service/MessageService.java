@@ -11,4 +11,6 @@ public interface MessageService {
     List<Message> findAll();
     Message update(UUID id, String updateContent);
     void delete(UUID id);
+
+
 }

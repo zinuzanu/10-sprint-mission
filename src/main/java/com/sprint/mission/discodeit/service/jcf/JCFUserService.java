@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.service.jcf;
 
+import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.UserService;
 
@@ -42,6 +44,16 @@ public class JCFUserService implements UserService {
     public void delete(UUID uuid) {
         User user = findById(uuid);
         users.remove(user);
+    }
+
+    @Override
+    public List<Channel> findMyChannels(UUID userId) {
+        return findById(userId).getMyChannels();
+    }
+
+    @Override
+    public List<Message> findMyMessages(UUID userId) {
+        return findById(userId).getMyMessages();
     }
 
 

@@ -13,6 +13,9 @@ public class Message extends BaseEntity {
         this.channel = channel;
         this.content = content;
         validateMessage();
+
+        user.addMyMessages(this);
+        channel.addMessage(this);
     }
 
     public void updateMessage(String content) {
