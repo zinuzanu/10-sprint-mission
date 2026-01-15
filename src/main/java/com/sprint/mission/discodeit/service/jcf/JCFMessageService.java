@@ -22,10 +22,8 @@ public class JCFMessageService implements MessageService {
     }
 
     public Message createMessage(String content, UUID channelId, UUID userId){
-        Channel channel = channelService.findChannelById(channelId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 채널 없음"));
-        User user = userService.findUserById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 없음"));
+        Channel channel = channelService.findChannelByChannelId(channelId);
+        User user = userService.findUserById(userId);
 
         Message newMessage = new Message(content, channel, user);
         messageMap.put(newMessage.getId(), newMessage);
@@ -37,15 +35,12 @@ public class JCFMessageService implements MessageService {
     }
 
     public List<Message> findMessagesByChannelId(UUID channelId){
-        Channel channel = channelService.findChannelById(channelId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 채널 없음"));
-
+        Channel channel = channelService.findChannelByChannelId(channelId);
         return channel.getChannelMessages();
     }
 
     public List<Message> findMessagesByUserId(UUID userId){
-        User user = userService.findUserById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 없음"));
+        User user = userService.findUserById(userId);
 
         return user.getMyMessages();
     }
@@ -54,13 +49,16 @@ public class JCFMessageService implements MessageService {
         return new ArrayList<>(messageMap.values());
     }
 
-    public Optional<Message> findMessageById(UUID id){
-        return Optional.ofNullable(messageMap.get(id));
+    public Message findMessageById(UUID id){
+        Message message = messageMap.get(id);
+        if (message == null) {
+            throw new IllegalArgumentException("해당 메시지가 없습니다.");
+        }
+        return message;
     }
 
     public Message updateMessage(UUID id, String newContent){
-        Message targetMessage = findMessageById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 메시지 없음"));
+        Message targetMessage = findMessageById(id);
 
         targetMessage.updateContent(newContent);
         System.out.println("메시지가 수정되었습니다");
@@ -69,8 +67,7 @@ public class JCFMessageService implements MessageService {
     }
 
     public void deleteMessage(UUID id){
-        Message targetMessage = findMessageById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 메시지 없음"));
+        Message targetMessage = findMessageById(id);
 
         // 유저 쪽 리스트에서 삭제
         if (targetMessage.getUser() != null) {

@@ -21,8 +21,12 @@ public class JCFUserService implements UserService {
     }
 
     @Override
-    public Optional<User> findUserById(UUID id){
-        return Optional.ofNullable(userMap.get(id));
+    public User findUserById(UUID id) {
+        User user = userMap.get(id);
+        if (user == null) {
+            throw new IllegalArgumentException("해당 유저가 없습니다.");
+        }
+        return user;
     }
 
     @Override
@@ -31,37 +35,40 @@ public class JCFUserService implements UserService {
     }
 
     @Override
-    public User updateUserInfo(UUID id, String newUsername, String newEmail){
-        User targetUser = findUserById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 없음"));
-        try{
-            validateUpdateInfo(newUsername, newEmail);
-        } catch (IllegalArgumentException e){
-            System.out.println(e.getMessage());
-            return targetUser;
-        }
+    public User updateUserInfo(UUID id, String newUsername, String newEmail) {
+        User targetUser = findUserById(id);
 
-        if (newUsername != null){
-            targetUser.updateUsername(newUsername);
-            System.out.println("이름이 변경되었습니다: " + targetUser.getUsername());
-        }
-        if (newEmail != null){
-            targetUser.updateEmail(newEmail);
-            System.out.println("이메일이 변경되었습니다: " + targetUser.getEmail());
-        }
-        return targetUser;
-    }
-
-    public void validateUpdateInfo(String name, String email){
-        if (name == null && email == null){
+        // username, email 검증
+        if (newUsername == null && newEmail == null) {
             throw new IllegalArgumentException("둘 중 하나는 입력해야 합니다.");
         }
-        if (name != null && name.contains(" ")){
-            throw new IllegalArgumentException("띄어쓰기는 포함할 수 없습니다.");
-        }
-        if (email != null && !isValidEmail(email)){
-            throw new IllegalArgumentException("이메일 형식이 잘못되었습니다.");
-        }
+
+        // Username 검증
+        Optional.ofNullable(newUsername)
+                .filter(name -> name.contains(" "))
+                .ifPresent(name -> {
+                    throw new IllegalArgumentException("띄어쓰기는 포함할 수 없습니다.");
+                });
+
+        // Email 검증
+        Optional.ofNullable(newEmail)
+                .filter(email -> !isValidEmail(email))
+                .ifPresent(email -> {
+                    throw new IllegalArgumentException("이메일 형식이 잘못되었습니다.");
+                });
+
+        // 실제 수정 로직
+        Optional.ofNullable(newUsername).ifPresent(name -> {
+            targetUser.updateUsername(name);
+            System.out.println("이름이 변경되었습니다: " + targetUser.getUsername());
+        });
+
+        Optional.ofNullable(newEmail).ifPresent(email -> {
+            targetUser.updateEmail(email);
+            System.out.println("이메일이 변경되었습니다: " + targetUser.getEmail());
+        });
+
+        return targetUser;
     }
 
     private boolean isValidEmail(String email){
@@ -75,8 +82,7 @@ public class JCFUserService implements UserService {
 
     @Override
     public void deleteUser(UUID id){
-        User targetUser = findUserById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 없음"));
+        User targetUser = findUserById(id);
 
         for (Channel channel : targetUser.getMyChannels()) {
             channel.getParticipants().remove(targetUser);
@@ -88,10 +94,17 @@ public class JCFUserService implements UserService {
 
     @Override
     public User changePassword(UUID id, String newPassword) {
-        User targetUser = findUserById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 없음"));
+        User targetUser = findUserById(id);
         targetUser.updatePassword(newPassword);
         return targetUser;
+    }
+
+    @Override
+    public List<User> findParticipants(UUID channelID){
+        return userMap.values().stream()
+                .filter(user -> user.getMyChannels().stream()
+                        .anyMatch(channel -> channel.getId().equals(channelID)))
+                .toList();
     }
 
 }
