@@ -48,6 +48,16 @@ public class JCFMessageService implements MessageService {
     }
 
     @Override
+    public List<Message> findMessagesByChannelId(UUID channelId) {
+        return channelService.findById(channelId).getMessages();
+    }
+
+    @Override
+    public List<Message> findMessagesByUserId(UUID userId) {
+        return userService.findById(userId).getMyMessages();
+    }
+
+    @Override
     public Message update(UUID id, String content) {
         Message updateContent = findById(id);
         updateContent.updateMessage(content);
@@ -55,18 +65,22 @@ public class JCFMessageService implements MessageService {
     }
 
     @Override
-    public void delete(UUID uuid) {
-        Message message = findById(uuid);
+    public void deleteMessageByMessageId(UUID messageId) {
+        Message message = findById(messageId);
+        if (message.getUser() != null) message.getUser().removeMyMessages(message);
+        if (message.getChannel() != null) message.getChannel().removeMessages(message);
+
+        // 실제 데이터 파기
         messages.remove(message);
     }
 
     @Override
-    public List<Message> findMessages(UUID channelId) {
-        return channelService.findById(channelId).getMessages();
+    public void deleteMessagesByUserId(UUID userId) {
+        findMessagesByUserId(userId).forEach(m-> deleteMessageByMessageId(m.getId()));
     }
 
     @Override
-    public List<Message> findMyMessages(UUID userId) {
-        return userService.findById(userId).getMyMessages();
+    public void deleteMessagesByChannelId(UUID channelId) {
+        findMessagesByChannelId(channelId).forEach(m-> deleteMessageByMessageId(m.getId()));
     }
 }

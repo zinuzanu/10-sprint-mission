@@ -6,15 +6,14 @@ import java.util.UUID;
 
 public interface ChannelService {
     Channel create(String channelName);
+
     Channel findById(UUID id);
     List<Channel> findAll();
+    List<Channel> findChannelsByUserId(UUID userId);
 
-    // 메서드 이름, 매개변수 이름은 추후 필드가 확장되면 변경 예정 (다른 도메인 메서드 또한 동일)
-    // Ex: 채널 이름 변경 - updateChannelName, 채널 소개글 변경 - updateChannelIntroduce
     Channel update(UUID id, String updateChannelName);
-    void delete(UUID id);
 
-    List<Channel> findMyChannels(UUID userId);
-    void addMember(UUID channelId, UUID userId);
-    void removeMember(UUID channelId, UUID userId);
+    void addChannelByUserId(UUID channelId, UUID userId);
+    void removeChannelByUserId(UUID channelId, UUID userId);
+    void deleteChannelByChannelId(UUID channelId);
 }

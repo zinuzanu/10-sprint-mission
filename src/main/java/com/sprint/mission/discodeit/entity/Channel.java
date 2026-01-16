@@ -42,6 +42,8 @@ public class Channel extends BaseEntity {
         if (message != null) messages.add(message);
     }
 
+    public void removeMessages(Message message) { if (message != null) messages.remove(message); }
+
     // 채널 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
     private void validateChannel(String channelName) {
         // null, Blank 체크

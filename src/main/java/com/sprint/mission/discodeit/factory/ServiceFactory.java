@@ -18,6 +18,8 @@ public class ServiceFactory {
         JCFMessageService m = new JCFMessageService(u, c);
 
         u.setChannelService(c);
+        u.setMessageService(m); // 유저 삭제 시 메시지 청소를 위해 필요
+        c.setMessageService(m); // 채널 삭제 시 메시지 청소를 위해 필요
 
         userService = u;
         channelService = c;

@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.jcf;
 
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.ChannelService;
+import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 public class JCFUserService implements UserService {
     private ChannelService channelService;
+    private MessageService messageService;
     private final List<User> users =  new ArrayList<>();
 
     public JCFUserService() {
@@ -17,6 +19,10 @@ public class JCFUserService implements UserService {
 
     public void setChannelService(ChannelService channelService) {
         this.channelService = channelService;
+    }
+
+    public void setMessageService(MessageService messageService) {
+        this.messageService = messageService;
     }
 
     @Override
@@ -41,6 +47,11 @@ public class JCFUserService implements UserService {
     }
 
     @Override
+    public List<User> findMembers(UUID channelId) {
+        return channelService.findById(channelId).getMembers();
+    }
+
+    @Override
     public User update(UUID id, String userNickname) {
         User user = findById(id);
         user.updateNickname(userNickname);
@@ -48,14 +59,13 @@ public class JCFUserService implements UserService {
     }
 
     @Override
-    public void delete(UUID uuid) {
-        User user = findById(uuid);
+    public void deleteUserByUserId(UUID userId) {
+        User user = findById(userId);
+        messageService.deleteMessagesByUserId(userId);
+        new ArrayList<>(user.getMyChannels()).forEach(channel -> {
+            channel.removeMember(user);
+        });
         users.remove(user);
-    }
-
-    @Override
-    public List<User> findMembers(UUID channelId) {
-        return channelService.findById(channelId).getMembers();
     }
 
     // 이메일 중복 시 예외를 던져 가입 중단 (Fail-Fast)

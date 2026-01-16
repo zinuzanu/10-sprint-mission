@@ -44,6 +44,8 @@ public class User extends BaseEntity {
         if (message != null) this.myMessages.add(message);
     }
 
+    public void removeMyMessages(Message message) { if (message != null) this.myMessages.remove(message); }
+
     // 유저 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
     // 나중에 필드가 늘어난다면 헬퍼 메서드나 정규 표현식으로 변환 예정
     private void validateUser(String userNickname, String userEmail) {
@@ -59,8 +61,6 @@ public class User extends BaseEntity {
         // 유저 이름 길이 체크 (2자 이상, 10자 이하)
         if (userNickname.length() < 2 || userNickname.length() > 10) throw new IllegalArgumentException("닉네임은 2자 이상, 10자 이하로 설정하세요.");
     }
-
-
 
     @Override
     public String toString() {
