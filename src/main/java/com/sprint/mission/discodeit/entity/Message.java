@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.entity;
 
 public class Message extends BaseEntity {
+    private static final long serialVersionUID = 1L;
     private final User user;
     private final Channel channel;
     private String content;

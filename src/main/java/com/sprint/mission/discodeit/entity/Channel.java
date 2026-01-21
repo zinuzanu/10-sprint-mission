@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Channel extends BaseEntity {
+    private static final long serialVersionUID = 1L;
     private String channelName;
 
     private final List<User> members = new ArrayList<>();
@@ -42,15 +43,19 @@ public class Channel extends BaseEntity {
         if (message != null) messages.add(message);
     }
 
-    public void removeMessages(Message message) { if (message != null) messages.remove(message); }
+    public void removeMessages(Message message) {
+        if (message != null) messages.remove(message);
+    }
 
     // 채널 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
     private void validateChannel(String channelName) {
         // null, Blank 체크
-        if (channelName == null || channelName.isEmpty()) throw new IllegalArgumentException("채널 이름은 필수이며, 비어있을 수 없습니다.");
+        if (channelName == null || channelName.isEmpty())
+            throw new IllegalArgumentException("채널 이름은 필수이며, 비어있을 수 없습니다.");
 
         // 채널 이름 길이 체크 (2자 이상, 15자 이하)
-        if (channelName.length() < 2 || channelName.length() > 15) throw new IllegalArgumentException("이름은 2자 이상, 15자 이하로 설정하세요.");
+        if (channelName.length() < 2 || channelName.length() > 15)
+            throw new IllegalArgumentException("이름은 2자 이상, 15자 이하로 설정하세요.");
     }
 
     @Override
