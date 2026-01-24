@@ -15,4 +15,6 @@ public interface UserService {
     User update(UUID id, String userNickname);
 
     void deleteUserByUserId(UUID id);
+
+    void sync(User user);
 }

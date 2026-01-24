@@ -13,8 +13,19 @@ public class JCFChannelRepository implements ChannelRepository {
 
     @Override
     public Channel save(Channel channel) {
-        channels.removeIf(c -> c.getId().equals(channel.getId()));
-        channels.add(channel);
+        int index = -1;
+        for (int i = 0; i <  channels.size(); i++) {
+            if (channels.get(i).getId().equals(channel.getId())) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index != -1) {
+            channels.set(index, channel);
+        } else {
+            channels.add(channel);
+        }
         return channel;
     }
 

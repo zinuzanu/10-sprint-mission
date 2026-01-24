@@ -25,6 +25,11 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
+    public void sync(Message message) {
+        messageRepository.save(message);
+    }
+
+    @Override
     public Message create(UUID userId, UUID channelId, String content) {
         User user = userService.findById(userId);
         Channel channel = channelService.findById(channelId);
@@ -34,7 +39,12 @@ public class BasicMessageService implements MessageService {
         }
 
         Message message = new Message(user, channel, content);
-        return messageRepository.save(message);
+        Message savedMessage = messageRepository.save(message);
+
+        userService.sync(user);
+        channelService.sync(channel);
+
+        return savedMessage;
     }
 
     @Override
@@ -68,8 +78,16 @@ public class BasicMessageService implements MessageService {
     @Override
     public void deleteMessageByMessageId(UUID messageId) {
         Message message = findById(messageId);
-        if (message.getUser() != null) message.getUser().removeMyMessages(message);
-        if (message.getChannel() != null) message.getChannel().removeMessages(message);
+        User user = message.getUser();
+        Channel channel = message.getChannel();
+        if (message.getUser() != null) {
+            message.getUser().removeMyMessages(message);
+            userService.sync(user);
+        }
+        if (message.getChannel() != null) {
+            message.getChannel().removeMessages(message);
+            channelService.sync(channel);
+        }
 
         // 실제 데이터 파기
         messageRepository.deleteById(messageId);
@@ -77,11 +95,11 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public void deleteMessagesByUserId(UUID userId) {
-        findMessagesByUserId(userId).forEach(m-> deleteMessageByMessageId(m.getId()));
+        new ArrayList<> (findMessagesByUserId(userId)).forEach(m-> deleteMessageByMessageId(m.getId()));
     }
 
     @Override
     public void deleteMessagesByChannelId(UUID channelId) {
-        findMessagesByChannelId(channelId).forEach(m-> deleteMessageByMessageId(m.getId()));
+        new ArrayList<> (findMessagesByChannelId(channelId)).forEach(m-> deleteMessageByMessageId(m.getId()));
     }
 }

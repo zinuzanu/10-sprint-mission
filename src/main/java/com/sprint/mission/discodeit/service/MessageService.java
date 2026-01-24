@@ -18,5 +18,5 @@ public interface MessageService {
     void deleteMessagesByUserId(UUID id);
     void deleteMessagesByChannelId(UUID channelId);
 
-
+    void sync(Message message);
 }

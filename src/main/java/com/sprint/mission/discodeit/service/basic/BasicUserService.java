@@ -29,6 +29,11 @@ public class BasicUserService implements UserService {
     }
 
     @Override
+    public void sync(User user) {
+        userRepository.save(user);
+    }
+
+    @Override
     public User create(String userName, String userEmail) {
         validateDuplicateEmail(userEmail);
         User newUser = new User(userName, userEmail);
@@ -64,6 +69,7 @@ public class BasicUserService implements UserService {
         messageService.deleteMessagesByUserId(userId);
         new ArrayList<>(user.getMyChannels()).forEach(channel -> {
             channel.removeMember(user);
+            channelService.sync(channel);
         });
         userRepository.deleteById(userId);
     }

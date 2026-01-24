@@ -72,20 +72,6 @@ public class User extends BaseEntity {
         return String.format("User[닉네임: %s, 이메일: %s, User ID: %s]", userNickname, userEmail, getId());
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        User user = (User) o;
-        return Objects.equals(userEmail, user.userEmail);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(userEmail);
-    }
-
     public String getUserNickname() {
         return userNickname;
     }

@@ -13,8 +13,19 @@ public class JCFUserRepository implements UserRepository {
 
     @Override
     public User save(User user) {
-        users.removeIf(u -> u.getId().equals(user.getId()));
-        users.add(user);
+        int index = -1;
+        for (int i = 0; i <= users.size(); i++) {
+            if (users.get(i).getId().equals(user.getId())) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index != -1) {
+            users.set(index, user);
+        } else {
+            users.add(user);
+        }
         return user;
     }
 

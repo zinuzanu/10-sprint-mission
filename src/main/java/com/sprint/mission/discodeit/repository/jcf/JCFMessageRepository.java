@@ -13,8 +13,19 @@ public class JCFMessageRepository implements MessageRepository {
 
     @Override
     public Message save(Message message) {
-        messages.removeIf(m -> m.getId().equals(message.getId()));
-        messages.add(message);
+        int index = -1;
+        for (int i = 0; i <  messages.size(); i++) {
+            if (messages.get(i).getId().equals(message.getId())) {
+                index = i;
+                break;
+            }
+        }
+
+        if (index != -1) {
+            messages.set(index, message);
+        } else {
+            messages.add(message);
+        }
         return message;
     }
 

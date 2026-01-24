@@ -16,4 +16,6 @@ public interface ChannelService {
     void addChannelByUserId(UUID channelId, UUID userId);
     void removeChannelByUserId(UUID channelId, UUID userId);
     void deleteChannelByChannelId(UUID channelId);
+
+    void sync(Channel channel);
 }

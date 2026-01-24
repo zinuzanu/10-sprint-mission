@@ -15,8 +15,18 @@ public class FileUserRepository implements UserRepository {
     @Override
     public User save(User user) {
         List<User> users = findAll();
-        users.removeIf(u -> u.getId().equals(user.getId()));
-        users.add(user);
+        boolean found = false;
+
+        for (int i = 0; i < users.size(); i++) {
+            if (users.get(i).getId().equals(user.getId())) {
+                users.set(i, user);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) users.add(user);
+
         saveToFile(users);
         return user;
     }

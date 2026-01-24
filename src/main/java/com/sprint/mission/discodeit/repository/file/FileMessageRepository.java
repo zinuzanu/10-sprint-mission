@@ -15,8 +15,18 @@ public class FileMessageRepository implements MessageRepository {
     @Override
     public Message save(Message message) {
         List<Message> messages = findAll();
-        messages.removeIf(m -> m.getId().equals(message.getId()));
-        messages.add(message);
+        boolean found = false;
+
+        for (int i = 0; i < messages.size(); i++) {
+            if (messages.get(i).getId().equals(message.getId())) {
+                messages.set(i, message);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) messages.add(message);
+
         saveToFile(messages);
         return message;
     }
