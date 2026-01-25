@@ -30,7 +30,7 @@
 //    }
 //
 //    @Override
-//    public void sync(User user) {
+//    public void save(User user) {
 //        saveToFile();
 //    }
 //

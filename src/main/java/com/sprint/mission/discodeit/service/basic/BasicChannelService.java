@@ -27,7 +27,7 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public void sync(Channel channel) {
+    public void save(Channel channel) {
         channelRepository.save(channel);
     }
 
@@ -67,7 +67,7 @@ public class BasicChannelService implements ChannelService {
         channel.addMember(user);
         user.addMyChannel(channel);
         channelRepository.save(channel);
-        userService.sync(user);
+        userService.save(user);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class BasicChannelService implements ChannelService {
         channel.removeMember(user);
         user.removeMyChannel(channel);
         channelRepository.save(channel);
-        userService.sync(user);
+        userService.save(user);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class BasicChannelService implements ChannelService {
         messageService.deleteMessagesByChannelId(channelId);
         new ArrayList<>(channel.getMembers()).forEach(user -> {
             user.removeMyChannel(channel);
-            userService.sync(user);
+            userService.save(user);
         });
         channelRepository.deleteById(channelId);
     }

@@ -28,7 +28,7 @@
 //    }
 //
 //    @Override
-//    public void sync(Channel channel) {
+//    public void save(Channel channel) {
 //        saveToFile();
 //    }
 //

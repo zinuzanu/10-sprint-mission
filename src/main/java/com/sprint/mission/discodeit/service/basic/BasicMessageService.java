@@ -25,7 +25,7 @@ public class BasicMessageService implements MessageService {
     }
 
     @Override
-    public void sync(Message message) {
+    public void save(Message message) {
         messageRepository.save(message);
     }
 
@@ -41,8 +41,8 @@ public class BasicMessageService implements MessageService {
         Message message = new Message(user, channel, content);
         Message savedMessage = messageRepository.save(message);
 
-        userService.sync(user);
-        channelService.sync(channel);
+        userService.save(user);
+        channelService.save(channel);
 
         return savedMessage;
     }
@@ -82,11 +82,11 @@ public class BasicMessageService implements MessageService {
         Channel channel = message.getChannel();
         if (message.getUser() != null) {
             message.getUser().removeMyMessages(message);
-            userService.sync(user);
+            userService.save(user);
         }
         if (message.getChannel() != null) {
             message.getChannel().removeMessages(message);
-            channelService.sync(channel);
+            channelService.save(channel);
         }
 
         // 실제 데이터 파기

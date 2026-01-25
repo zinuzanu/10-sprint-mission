@@ -29,7 +29,7 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public void sync(User user) {
+    public void save(User user) {
         userRepository.save(user);
     }
 
@@ -69,7 +69,7 @@ public class BasicUserService implements UserService {
         messageService.deleteMessagesByUserId(userId);
         new ArrayList<>(user.getMyChannels()).forEach(channel -> {
             channel.removeMember(user);
-            channelService.sync(channel);
+            channelService.save(channel);
         });
         userRepository.deleteById(userId);
     }

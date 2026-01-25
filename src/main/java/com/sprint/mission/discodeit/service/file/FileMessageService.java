@@ -26,7 +26,7 @@
 //    }
 //
 //    @Override
-//    public void sync(Message message) {
+//    public void save(Message message) {
 //        saveToFile();
 //    }
 //
