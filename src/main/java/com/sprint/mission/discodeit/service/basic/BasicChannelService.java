@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,16 +14,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class BasicChannelService implements ChannelService {
     private final ChannelRepository channelRepository;
 
     private final UserService userService;
     private MessageService messageService;
-
-    public BasicChannelService(ChannelRepository channelRepository, UserService userService) {
-        this.channelRepository = channelRepository;
-        this.userService = userService;
-    }
 
     public void setMessageService(MessageService messageService) {
         this.messageService = messageService;

@@ -1,5 +1,8 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
+@Getter
 public class Message extends BaseEntity {
     private static final long serialVersionUID = 1L;
     private final User user;
@@ -40,17 +43,5 @@ public class Message extends BaseEntity {
     public String toString() {
         return String.format("Message[내용: %s, 작성자: %s, 채널: %s, Message ID: %s]",
                 content, user, channel, getId());
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public User getUser() {
-        return user;
     }
 }

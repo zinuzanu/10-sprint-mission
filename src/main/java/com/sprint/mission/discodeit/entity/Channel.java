@@ -1,8 +1,11 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class Channel extends BaseEntity {
     private static final long serialVersionUID = 1L;
     private String channelName;
@@ -61,10 +64,6 @@ public class Channel extends BaseEntity {
     @Override
     public String toString() {
         return String.format("Channel[이름: %s, Channel ID: %s]", channelName, getId());
-    }
-
-    public String getChannelName() {
-        return channelName;
     }
 
     public List<Message> getMessages() {

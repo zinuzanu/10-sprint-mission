@@ -1,9 +1,12 @@
 package com.sprint.mission.discodeit.entity;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Getter
 public class User extends BaseEntity {
     private static final long serialVersionUID = 1L;
 
@@ -70,14 +73,6 @@ public class User extends BaseEntity {
     @Override
     public String toString() {
         return String.format("User[닉네임: %s, 이메일: %s, User ID: %s]", userNickname, userEmail, getId());
-    }
-
-    public String getUserNickname() {
-        return userNickname;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
     }
 
     public List<Message> getMyMessages() {
