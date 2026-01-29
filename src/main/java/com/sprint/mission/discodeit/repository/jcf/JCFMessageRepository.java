@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.Message;
@@ -46,3 +47,4 @@ public class JCFMessageRepository implements MessageRepository {
         messages.removeIf(m -> m.getId().equals(id));
     }
 }
+*/

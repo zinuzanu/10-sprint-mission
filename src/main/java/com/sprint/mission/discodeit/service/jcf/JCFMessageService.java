@@ -54,7 +54,7 @@
 //
 //    @Override
 //    public List<Message> findMessagesByUserId(UUID userId) {
-//        return userService.findById(userId).getMyMessages();
+//        return userService.findById(userId).getMessages();
 //    }
 //
 //    @Override
@@ -67,8 +67,8 @@
 //    @Override
 //    public void deleteMessageByMessageId(UUID messageId) {
 //        Message message = findById(messageId);
-//        if (message.getUser() != null) message.getUser().removeMyMessages(message);
-//        if (message.getChannel() != null) message.getChannel().removeMessages(message);
+//        if (message.getUser() != null) message.getUser().removeMessage(message);
+//        if (message.getChannel() != null) message.getChannel().removeMessage(message);
 //
 //        // 실제 데이터 파기
 //        messages.remove(message);

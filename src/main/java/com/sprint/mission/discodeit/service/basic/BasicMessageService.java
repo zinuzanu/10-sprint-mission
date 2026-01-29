@@ -63,13 +63,13 @@ public class BasicMessageService implements MessageService {
 
     @Override
     public List<Message> findMessagesByUserId(UUID userId) {
-        return userService.findById(userId).getMyMessages();
+        return userService.findById(userId).getMessages();
     }
 
     @Override
     public Message update(UUID id, String content) {
         Message updateContent = findById(id);
-        updateContent.updateMessage(content);
+        updateContent.update(content);
         return messageRepository.save(updateContent);
     }
 
@@ -78,12 +78,13 @@ public class BasicMessageService implements MessageService {
         Message message = findById(messageId);
         User user = message.getUser();
         Channel channel = message.getChannel();
-        if (message.getUser() != null) {
-            message.getUser().removeMyMessages(message);
+
+        if (user != null) {
+            user.removeMessage(message);
             userService.save(user);
         }
-        if (message.getChannel() != null) {
-            message.getChannel().removeMessages(message);
+        if (channel != null) {
+            channel.removeMessage(message);
             channelService.save(channel);
         }
 

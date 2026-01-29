@@ -73,7 +73,7 @@
 //    public void deleteUserByUserId(UUID userId) {
 //        User user = findById(userId);
 //        messageService.deleteMessagesByUserId(userId);
-//        new ArrayList<>(user.getMyChannels()).forEach(channel -> {
+//        new ArrayList<>(user.getChannels()).forEach(channel -> {
 //            channel.removeMember(user);
 //        });
 //        users.remove(user);

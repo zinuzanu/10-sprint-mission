@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit;
 
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.ChannelService;
@@ -10,17 +11,19 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import java.util.UUID;
+
 @SpringBootApplication
 public class DiscodeitApplication {
 	static User setupUser(UserService userService) {
-		User user = userService.create("호야", "hoya@codeit.com");
-		System.out.println("유저 생성 완료: " + user.getUserNickname());
+		User user = userService.create("꼬야", "kkoyap@codeit.com", "kko123456", UUID.randomUUID());
+		System.out.println("유저 생성 완료: " + user.getUsername());
 		return user;
 	}
 
 	static Channel setupChannel(ChannelService channelService) {
-		Channel channel = channelService.create("호야의 채널");
-		System.out.println("채널 생성 완료: " + channel.getChannelName());
+		Channel channel = channelService.create("꼬야의 채널", "꼬야의 채널 입니다." , ChannelType.PRIVATE);
+		System.out.println("채널 생성 완료: " + channel.getName());
 		return channel;
 	}
 

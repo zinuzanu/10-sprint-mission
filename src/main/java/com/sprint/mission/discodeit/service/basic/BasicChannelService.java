@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
@@ -31,8 +32,8 @@ public class BasicChannelService implements ChannelService {
     }
 
     @Override
-    public Channel create(String channelName) {
-        Channel newChannel = new Channel(channelName);
+    public Channel create(String name, String description, ChannelType type) {
+        Channel newChannel = new Channel(name, description, type);
         return channelRepository.save(newChannel);
     }
 
@@ -50,13 +51,13 @@ public class BasicChannelService implements ChannelService {
     @Override
     public List<Channel> findChannelsByUserId(UUID userId) {
         User user = userService.findById(userId);
-        return user.getMyChannels();
+        return user.getChannels();
     }
 
     @Override
-    public Channel update(UUID id, String updateChannelName) {
+    public Channel update(UUID id, String name, String description) {
         Channel updateChannel = findById(id);
-        updateChannel.updateChannel(updateChannelName);
+        updateChannel.update(name, description);
         return channelRepository.save(updateChannel);
     }
 
@@ -64,7 +65,7 @@ public class BasicChannelService implements ChannelService {
         Channel channel = findById(channelId);
         User user = userService.findById(userId);
         channel.addMember(user);
-        user.addMyChannel(channel);
+        user.addChannel(channel);
         channelRepository.save(channel);
         userService.save(user);
     }
@@ -74,7 +75,7 @@ public class BasicChannelService implements ChannelService {
         Channel channel = findById(channelId);
         User user = userService.findById(userId);
         channel.removeMember(user);
-        user.removeMyChannel(channel);
+        user.removeChannel(channel);
         channelRepository.save(channel);
         userService.save(user);
     }
@@ -84,7 +85,7 @@ public class BasicChannelService implements ChannelService {
         Channel channel = findById(channelId);
         messageService.deleteMessagesByChannelId(channelId);
         new ArrayList<>(channel.getMembers()).forEach(user -> {
-            user.removeMyChannel(channel);
+            user.removeChannel(channel);
             userService.save(user);
         });
         channelRepository.deleteById(channelId);

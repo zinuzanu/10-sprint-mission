@@ -12,10 +12,10 @@ public interface MessageService {
     List<Message> findMessagesByChannelId(UUID channelId);
     List<Message> findMessagesByUserId(UUID userId);
 
-    Message update(UUID id, String updateContent);
+    Message update(UUID id, String content);
 
     void deleteMessageByMessageId(UUID id);
-    void deleteMessagesByUserId(UUID id);
+    void deleteMessagesByUserId(UUID userId);
     void deleteMessagesByChannelId(UUID channelId);
 
     void save(Message message);

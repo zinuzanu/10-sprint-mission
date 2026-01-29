@@ -34,9 +34,10 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public User create(String userName, String userEmail) {
-        validateDuplicateEmail(userEmail);
-        User newUser = new User(userName, userEmail);
+    public User create(String username, String email, String password, UUID profileId) {
+        validateDuplicateEmail(email);
+
+        User newUser = new User(username, email, password, profileId);
         return userRepository.save(newUser);
     }
 
@@ -52,14 +53,18 @@ public class BasicUserService implements UserService {
     }
 
     @Override
-    public List<User> findMembers(UUID channelId) {
+    public List<User> findUsersByChannelId(UUID channelId) {
         return channelService.findById(channelId).getMembers();
     }
 
     @Override
-    public User update(UUID id, String userNickname) {
+    public User update(UUID id, String username, String email, String password, UUID profileId) {
         User user = findById(id);
-        user.updateNickname(userNickname);
+
+        if (email != null && !email.equals(user.getEmail()))
+            validateDuplicateEmail(email);
+
+        user.update(username, email, password, profileId);
         return userRepository.save(user);
     }
 
@@ -67,7 +72,7 @@ public class BasicUserService implements UserService {
     public void deleteUserByUserId(UUID userId) {
         User user = findById(userId);
         messageService.deleteMessagesByUserId(userId);
-        new ArrayList<>(user.getMyChannels()).forEach(channel -> {
+        new ArrayList<>(user.getChannels()).forEach(channel -> {
             channel.removeMember(user);
             channelService.save(channel);
         });

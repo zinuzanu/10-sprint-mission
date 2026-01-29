@@ -57,22 +57,22 @@
 //    public List<Channel> findChannelsByUserId(UUID userId) {
 //        User user = userService.findById(userId);
 //
-//        return user.getMyChannels();
+//        return user.getChannels();
 //    }
 //
 //    @Override
 //    public Channel update(UUID id, String updateChannelName) {
-//        Channel updateChannel = findById(id);
-//        updateChannel.updateChannel(updateChannelName);
+//        Channel update = findById(id);
+//        update.update(updateChannelName);
 //        saveToFile();
-//        return updateChannel;
+//        return update;
 //    }
 //
 //    public void addChannelByUserId(UUID channelId, UUID userId) {
 //        Channel channel = findById(channelId);
 //        User user = userService.findById(userId);
 //        channel.addMember(user);
-//        user.addMyChannel(channel);
+//        user.addChannel(channel);
 //        saveToFile();
 //    }
 //
@@ -81,7 +81,7 @@
 //        Channel channel = findById(channelId);
 //        User user = userService.findById(userId);
 //        channel.removeMember(user);
-//        user.removeMyChannel(channel);
+//        user.removeChannel(channel);
 //        saveToFile();
 //    }
 //
@@ -90,7 +90,7 @@
 //        Channel channel = findById(channelId);
 //        messageService.deleteMessagesByChannelId(channelId);
 //        new ArrayList<>(channel.getMembers()).forEach(user -> {
-//            user.removeMyChannel(channel);
+//            user.removeChannel(channel);
 //        });
 //        channels.remove(channel);
 //        saveToFile();

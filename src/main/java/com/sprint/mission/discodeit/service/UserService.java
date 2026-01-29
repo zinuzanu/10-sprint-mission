@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.UUID;
 
 public interface UserService {
-    User create(String userName, String userEmail);
+    User create(String username, String email, String password, UUID profileId);
 
     User findById(UUID id);
     List<User> findAll();
-    List<User> findMembers(UUID channelId);
+    List<User> findUsersByChannelId(UUID channelId);
 
-    User update(UUID id, String userNickname);
+    User update(UUID id, String username, String email, String password, UUID profileId);
 
     void deleteUserByUserId(UUID id);
 
