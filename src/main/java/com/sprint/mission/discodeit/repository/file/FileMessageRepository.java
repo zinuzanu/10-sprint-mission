@@ -8,7 +8,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,8 +54,8 @@ public class FileMessageRepository implements MessageRepository {
 
     @Override
     public List<Message> findAll() {
-        try {
-            return Files.list(DIRECTORY)
+        try (var stream = Files.list(DIRECTORY)) {
+            return stream
                     .filter(path -> path.toString().endsWith(EXTENSION))
                     .map(this::readMessageFromFile)
                     .flatMap(Optional::stream)
@@ -88,5 +88,13 @@ public class FileMessageRepository implements MessageRepository {
         } catch (IOException | ClassNotFoundException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Optional<Instant> findLatestMessageTimeByChannelId(UUID channelId) {
+        return findAll().stream()
+                .filter(m -> m.getChannelId().equals(channelId))
+                .map(Message::getCreatedAt) // BaseEntity의 Instant 필드
+                .max(Instant::compareTo);
     }
 }

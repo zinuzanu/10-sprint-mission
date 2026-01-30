@@ -1,7 +1,6 @@
 package com.sprint.mission.discodeit;
 
 import com.sprint.mission.discodeit.entity.Channel;
-import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.service.ChannelService;
@@ -21,13 +20,13 @@ public class DiscodeitApplication {
 	}
 
 	static Channel setupChannel(ChannelService channelService) {
-		Channel channel = channelService.create("꼬야의 채널", "꼬야의 채널 입니다." , ChannelType.PRIVATE);
+		Channel channel = channelService.createPublicChannel();
 		System.out.println("채널 생성 완료: " + channel.getName());
 		return channel;
 	}
 
 	static void messageCreateTest(MessageService messageService, Channel channel, User author) {
-		Message message = messageService.create(author.getId(), channel.getId(), "난 호야입니다~");
+		Message message = messageService.create(author.getId());
 		System.out.println("메시지 생성 성공! ID: " + message.getId());
 		System.out.println("내용: " + message.getContent());
 	}

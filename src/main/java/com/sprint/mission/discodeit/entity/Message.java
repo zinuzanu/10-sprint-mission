@@ -2,24 +2,28 @@ package com.sprint.mission.discodeit.entity;
 
 import lombok.Getter;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 @Getter
 public class Message extends BaseEntity {
     private static final long serialVersionUID = 1L;
-    private final User user;
-    private final Channel channel;
-    private String content;
 
-    public Message(User user, Channel channel, String content) {
-        if (user == null) throw new IllegalArgumentException("유저 정보가 유효하지 않습니다.");
-        if (channel == null) throw new IllegalArgumentException("채널 정보가 유효하지 않습니다.");
+    private final UUID authorId;
+    private final UUID channelId;
+    private String content;
+    private final List<UUID> attachmentIds;
+
+    public Message(UUID authorId, UUID channelId, String content, List<UUID> attachmentIds) {
+        if (authorId == null) throw new IllegalArgumentException("유저 정보가 유효하지 않습니다.");
+        if (channelId == null) throw new IllegalArgumentException("채널 정보가 유효하지 않습니다.");
         validateContent(content);
 
-        this.user = user;
-        this.channel = channel;
+        this.authorId = authorId;
+        this.channelId = channelId;
         this.content = content;
-
-        user.addMessage(this);
-        channel.addMessage(this);
+        this.attachmentIds = (attachmentIds != null) ? new ArrayList<>(attachmentIds) : new ArrayList<>();
     }
 
     public void update(String newContent) {
@@ -43,7 +47,7 @@ public class Message extends BaseEntity {
 
     @Override
     public String toString() {
-        return String.format("Message[내용: %s, 작성자: %s, 채널: %s, Message ID: %s]",
-                content, user, channel, getId());
+        return String.format("Message[내용: %s, 작성자ID: %s, 채널ID: %s, 첨부 파일 수: %d, Message ID: %s]",
+                content, authorId, channelId, attachmentIds.size(), getId());
     }
 }

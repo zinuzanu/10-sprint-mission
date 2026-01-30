@@ -42,12 +42,12 @@ public class BasicUserService implements UserService {
                 request.password(),
                 profileImageId
         );
-        UserStatus status = new UserStatus(newUser.getId());
-        newUser.setStatus(status);
-
-        if (userStatusRepository != null) userStatusRepository.save(status);
-
         userRepository.save(newUser);
+
+        if (userStatusRepository != null)  {
+            UserStatus status = new UserStatus(newUser.getId());
+            userStatusRepository.save(status);
+        }
 
         return convertToResponse(newUser);
     }
@@ -55,23 +55,24 @@ public class BasicUserService implements UserService {
     @Override
     public UserDto.Response findById(UUID id) {
         User user = findUserEntityById(id);
-        loadUserStatus(user);
         return convertToResponse(user);
     }
 
     @Override
     public List<UserDto.Response> findAll() {
         return userRepository.findAll().stream()
-                .peek(this ::loadUserStatus)
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<User> findUsersByChannelId(UUID channelId) {
-        return channelRepository.findById(channelId)
-                .map(channel -> channel.getMembers())
+        List<UUID> memberIds = channelRepository.findById(channelId)
+                .map(channel -> channel.getMemberIds())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않은 채널입니다."));
+        return memberIds.stream()
+                .map(this::findUserEntityById)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -100,18 +101,12 @@ public class BasicUserService implements UserService {
         User user = findUserEntityById(userId);
 
         messageRepository.findAll().stream()
-                .filter(m -> m.getUser().getId().equals(userId))
-                .forEach(m -> {
-                    if (m.getChannel() != null) {
-                        m.getChannel().removeMessage(m);
-                        channelRepository.save(m.getChannel());
-                    }
-                    messageRepository.deleteById(m.getId());
-                });
+                .filter(m -> userId.equals(m.getAuthorId()))
+                        .forEach(m -> messageRepository.deleteById(m.getId()));
 
         channelRepository.findAll().forEach(channel -> {
-            if (channel.getMembers().contains(user)) {
-                channel.removeMember(user);
+            if (channel.getMemberIds().contains(userId)) {
+                channel.removeMember(userId);
                 channelRepository.save(channel);
             }
         });
@@ -148,16 +143,22 @@ public class BasicUserService implements UserService {
 
     // [헬퍼 메서드]: 엔티티를 클라이언트 응답용 DTO로 변환 및 데이터 가공
     private UserDto.Response convertToResponse(User user) {
+        boolean isOnline = false;
+        if (userStatusRepository != null) {
+            isOnline = userStatusRepository.findById(user.getId())
+                    .map(status -> status.isOnline())
+                    .orElse(false);
+        }
         return new UserDto.Response(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
                 user.getProfileId(),
-                user.getStatus() != null && user.getStatus().isOnline()
+                isOnline
         );
     }
 
-    // [헬퍼 메서드]: 이미지 생성(create) 및 기존 이미지 수정(update)
+    // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(update)
     private UUID processImage(UUID existingId, UserDto.BinaryContentDto imageDto) {
         if (imageDto == null || binaryContentRepository == null) return existingId;
 
@@ -175,12 +176,5 @@ public class BasicUserService implements UserService {
         );
         binaryContentRepository.save(newImage);
         return newImage.getId();
-    }
-
-    // [헬퍼 메서드]: 조회(findById, findAll) 시 회원 온라인 상태 확인
-    private void loadUserStatus(User user) {
-        if (userStatusRepository != null) {
-            userStatusRepository.findById(user.getId()).ifPresent(user::setStatus);
-        }
     }
 }

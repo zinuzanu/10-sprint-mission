@@ -31,11 +31,11 @@
 //    }
 //
 //    @Override
-//    public Message create(UUID userId, UUID channelId, String content) {
-//        User user = userService.findById(userId);
+//    public Message createPublicChannel(UUID authorId, UUID channelId, String content) {
+//        User user = userService.findById(authorId);
 //        Channel channel = channelService.findById(channelId);
 //
-//        if (!channel.getMembers().contains(user)) {
+//        if (!channel.getMemberIds().contains(user)) {
 //            throw new IllegalStateException("해당 채널에 속해 있지 않으므로 메세지를 보낼 수 없습니다.");
 //        }
 //
@@ -64,8 +64,8 @@
 //    }
 //
 //    @Override
-//    public List<Message> findMessagesByUserId(UUID userId) {
-//        return userService.findById(userId).getMessages();
+//    public List<Message> findMessagesByUserId(UUID authorId) {
+//        return userService.findById(authorId).getMessages();
 //    }
 //
 //    @Override
@@ -77,7 +77,7 @@
 //    }
 //
 //    @Override
-//    public void deleteMessageByMessageId(UUID messageId) {
+//    public void delete(UUID messageId) {
 //        Message message = findById(messageId);
 //        if (message.getUser() != null) message.getUser().removeMessage(message);
 //        if (message.getChannel() != null) message.getChannel().removeMessage(message);
@@ -88,13 +88,13 @@
 //    }
 //
 //    @Override
-//    public void deleteMessagesByUserId(UUID userId) {
-//        findMessagesByUserId(userId).forEach(m-> deleteMessageByMessageId(m.getId()));
+//    public void deleteMessagesByUserId(UUID authorId) {
+//        findMessagesByUserId(authorId).forEach(m-> delete(m.getId()));
 //    }
 //
 //    @Override
 //    public void deleteMessagesByChannelId(UUID channelId) {
-//        findMessagesByChannelId(channelId).forEach(m-> deleteMessageByMessageId(m.getId()));
+//        findMessagesByChannelId(channelId).forEach(m-> delete(m.getId()));
 //    }
 //
 //    // 직렬화

@@ -24,7 +24,7 @@
 //    }
 //
 //    @Override
-//    public Channel create(String channelName) {
+//    public Channel createPublicChannel(String channelName) {
 //        Channel newChannel = new Channel(channelName);
 //        channels.add(newChannel);
 //        return newChannel;
@@ -44,8 +44,8 @@
 //    }
 //
 //    @Override
-//    public List<Channel> findChannelsByUserId(UUID userId) {
-//        User user = userService.findById(userId);
+//    public List<Channel> findChannelsByUserId(UUID authorId) {
+//        User user = userService.findById(authorId);
 //
 //        return user.getChannels();
 //    }
@@ -57,26 +57,26 @@
 //        return update;
 //    }
 //
-//    public void addChannelByUserId(UUID channelId, UUID userId) {
+//    public void addChannelByUserId(UUID channelId, UUID authorId) {
 //        Channel channel = findById(channelId);
-//        User user = userService.findById(userId);
+//        User user = userService.findById(authorId);
 //        channel.addMember(user);
 //        user.addChannel(channel);
 //    }
 //
 //    @Override
-//    public void removeChannelByUserId(UUID channelId, UUID userId) {
+//    public void removeChannelByUserId(UUID channelId, UUID authorId) {
 //        Channel channel = findById(channelId);
-//        User user = userService.findById(userId);
+//        User user = userService.findById(authorId);
 //        channel.removeMember(user);
 //        user.removeChannel(channel);
 //    }
 //
 //    @Override
-//    public void deleteChannelByChannelId(UUID channelId) {
+//    public void delete(UUID channelId) {
 //        Channel channel = findById(channelId);
 //        messageService.deleteMessagesByChannelId(channelId);
-//        new ArrayList<>(channel.getMembers()).forEach(user -> {
+//        new ArrayList<>(channel.getMemberIds()).forEach(user -> {
 //            user.removeChannel(channel);
 //        });
 //        channels.remove(channel);

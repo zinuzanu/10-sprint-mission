@@ -10,19 +10,19 @@
 //
 //public class JavaApplication {
 //    static User setupUser(UserService userService) {
-//        User user = userService.create("호야", "hoya@codeit.com");
+//        User user = userService.createPublicChannel("호야", "hoya@codeit.com");
 //        System.out.println("유저 생성 완료: " + user.getUserNickname());
 //        return user;
 //    }
 //
 //    static Channel setupChannel(ChannelService channelService) {
-//        Channel channel = channelService.create("호야의 채널");
+//        Channel channel = channelService.createPublicChannel("호야의 채널");
 //        System.out.println("채널 생성 완료: " + channel.getChannelName());
 //        return channel;
 //    }
 //
 //    static void messageCreateTest(MessageService messageService, Channel channel, User author) {
-//        Message message = messageService.create(author.getId(), channel.getId(), "난 호야입니다~");
+//        Message message = messageService.createPublicChannel(author.getId(), channel.getId(), "난 호야입니다~");
 //        System.out.println("메시지 생성 성공! ID: " + message.getId());
 //        System.out.println("내용: " + message.getContent());
 //    }

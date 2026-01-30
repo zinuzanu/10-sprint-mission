@@ -4,6 +4,7 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 public class Channel extends BaseEntity {
@@ -13,11 +14,10 @@ public class Channel extends BaseEntity {
     private String description;
     private ChannelType type;
 
-    private final List<User> members = new ArrayList<>();
-    private final List<Message> messages = new ArrayList<>();
+    private final List<UUID> memberIds = new ArrayList<>();
 
     public Channel(String name, String description, ChannelType type) {
-        validateChannel(name);
+        if (type == ChannelType.PUBLIC) validateChannel(name);
         this.name = name;
         this.description = description;
         this.type = type;
@@ -44,29 +44,19 @@ public class Channel extends BaseEntity {
     }
 
     // 채널 참여
-    public void addMember(User user) {
-        if (user == null) throw new IllegalArgumentException("참여할 유저 정보가 필요합니다.");
-        if (members.contains(user)) throw new IllegalArgumentException("이미 채널에 참여 중인 유저입니다.");
+    public void addMember(UUID userId) {
+        if (userId == null) throw new IllegalArgumentException("참여할 유저 정보가 필요합니다.");
+        if (memberIds.contains(userId)) throw new IllegalArgumentException("이미 채널에 참여 중인 유저입니다.");
 
-        members.add(user);
-        user.addChannel(this);
+        memberIds.add(userId);
     }
 
     // 채널 퇴장
-    public void removeMember(User user) {
-        if (user == null) throw new IllegalArgumentException("퇴장할 유저 정보가 필요합니다.");
-        if (!members.contains(user)) throw new IllegalArgumentException("채널에 참여하지 않은 유저는 나갈 수 없습니다.");
+    public void removeMember(UUID userId) {
+        if (userId == null) throw new IllegalArgumentException("퇴장할 유저 정보가 필요합니다.");
+        if (!memberIds.contains(userId)) throw new IllegalArgumentException("채널에 참여하지 않은 유저는 나갈 수 없습니다.");
 
-        members.remove(user);
-        user.removeChannel(this);
-    }
-
-    public void addMessage(Message message) {
-        if (message != null) messages.add(message);
-    }
-
-    public void removeMessage(Message message) {
-        if (message != null) messages.remove(message);
+        memberIds.remove(userId);
     }
 
     // 채널 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
@@ -85,11 +75,7 @@ public class Channel extends BaseEntity {
         return String.format("Channel[이름: %s, Channel ID: %s]", name, getId());
     }
 
-    public List<Message> getMessages() {
-        return new ArrayList<>(messages);
-    }
-
-    public List<User> getMembers() {
-        return new ArrayList<>(members);
+    public List<UUID> getMemberIds() {
+        return new ArrayList<>(memberIds);
     }
 }
