@@ -122,6 +122,7 @@ public class BasicUserService implements UserService {
         userRepository.deleteById(userId);
     }
 
+    // [헬퍼 메서드] 유저 존재 여부를 검증하고 엔티티를 반환 (중복 코드 제거 및 예외 처리 공통화)
     private User findUserEntityById(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않은 사용자 입니다. ID: " + id));

@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.ChannelDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -55,8 +56,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public ChannelDto.Response findById(UUID id) {
-        Channel channel = channelRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("채널을 찾을 수 없습니다."));
+        Channel channel = findChannelEntityById(id);
         return convertToResponse(channel);
     }
 
@@ -71,8 +71,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public ChannelDto.Response update(ChannelDto.UpdateRequest request) {
-        Channel channel = channelRepository.findById(request.id())
-                .orElseThrow(() -> new IllegalArgumentException("채널을 찾을 수 없습니다."));
+        Channel channel = findChannelEntityById(request.id());
 
         if (channel.getType() == ChannelType.PRIVATE) {
             throw new IllegalArgumentException("PRIVATE 채널은 수정할 수 없습니다.");
@@ -87,8 +86,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public void delete(UUID channelId) {
-        Channel channel = channelRepository.findById(channelId)
-                .orElseThrow(() -> new IllegalArgumentException("채널을 찾을 수 없습니다."));
+        Channel channel = findChannelEntityById(channelId);
 
         messageRepository.findAll().stream()
                 .filter(m -> channel.getId().equals(m.getChannelId()))
@@ -103,8 +101,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public void addChannelByUserId(UUID channelId, UUID userId) {
-        Channel channel = channelRepository.findById(channelId)
-                .orElseThrow(() -> new IllegalArgumentException("채널을 찾을 수 없습니다."));
+        Channel channel = findChannelEntityById(channelId);
 
         if (isMember(userId, channelId)) {
             throw new IllegalStateException("이미 가입된 채널입니다.");
@@ -120,8 +117,7 @@ public class BasicChannelService implements ChannelService {
 
     @Override
     public void removeChannelByUserId(UUID channelId, UUID userId) {
-        Channel channel = channelRepository.findById(channelId)
-                .orElseThrow(() -> new IllegalArgumentException("채널을 찾을 수 없습니다."));
+        Channel channel = findChannelEntityById(channelId);
 
         if (readStatusRepository != null) {
             readStatusRepository.findAll().stream()
@@ -133,10 +129,18 @@ public class BasicChannelService implements ChannelService {
         channelRepository.save(channel);
     }
 
+    // [헬퍼 메서드] 채널 존재 여부를 검증하고 엔티티를 반환 (중복 코드 제거 및 예외 처리 공통화)
+    private Channel findChannelEntityById(UUID id) {
+        return  channelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("채널을 찾을 수 없습니다."));
+    }
+
+    // [헬퍼 메서드] 특정 유저의 채널 가입 여부를 확인
     private boolean isMember(UUID userId, UUID channelId) {
         return readStatusRepository.findAll().stream()
                 .anyMatch(rs -> rs.getUserId().equals(userId) && rs.getChannelId().equals(channelId));
     }
+
     // [헬퍼 메서드]: 엔티티를 Response DTO로 변환 (가장 최신 메시지 시간 포함)
     private ChannelDto.Response convertToResponse(Channel channel) {
         // [추가] 요구사항: 해당 채널의 가장 최근 메시지 시간 정보 포함
