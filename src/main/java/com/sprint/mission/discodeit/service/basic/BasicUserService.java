@@ -122,12 +122,6 @@ public class BasicUserService implements UserService {
         userRepository.deleteById(userId);
     }
 
-    // [헬퍼 메서드] 유저 존재 여부를 검증하고 엔티티를 반환 (중복 코드 제거 및 예외 처리 공통화)
-    private User findUserEntityById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않은 사용자 입니다. ID: " + id));
-    }
-
     // 이메일 중복 시 예외를 던져 가입 중단 (Fail-Fast)
     private void validateDuplicateEmail(String userEmail) {
         if (userRepository.findByEmail(userEmail).isPresent()) {
@@ -140,6 +134,12 @@ public class BasicUserService implements UserService {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 이름입니다: " + username);
         }
+    }
+
+    // [헬퍼 메서드]: 유저 존재 여부를 검증하고 엔티티를 반환 (중복 코드 제거 및 예외 처리 공통화)
+    private User findUserEntityById(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않은 사용자 입니다. ID: " + id));
     }
 
     // [헬퍼 메서드]: 엔티티를 클라이언트 응답용 DTO로 변환 및 데이터 가공

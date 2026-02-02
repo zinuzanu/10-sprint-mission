@@ -129,16 +129,17 @@ public class BasicChannelService implements ChannelService {
         channelRepository.save(channel);
     }
 
-    // [헬퍼 메서드] 채널 존재 여부를 검증하고 엔티티를 반환 (중복 코드 제거 및 예외 처리 공통화)
-    private Channel findChannelEntityById(UUID id) {
-        return  channelRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("채널을 찾을 수 없습니다."));
-    }
 
-    // [헬퍼 메서드] 특정 유저의 채널 가입 여부를 확인
+    // [헬퍼 메서드]: 특정 유저의 채널 가입 여부를 확인
     private boolean isMember(UUID userId, UUID channelId) {
         return readStatusRepository.findAll().stream()
                 .anyMatch(rs -> rs.getUserId().equals(userId) && rs.getChannelId().equals(channelId));
+    }
+
+    // [헬퍼 메서드]: 채널 존재 여부를 검증하고 엔티티를 반환 (중복 코드 제거 및 예외 처리 공통화)
+    private Channel findChannelEntityById(UUID id) {
+        return  channelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("채널을 찾을 수 없습니다."));
     }
 
     // [헬퍼 메서드]: 엔티티를 Response DTO로 변환 (가장 최신 메시지 시간 포함)

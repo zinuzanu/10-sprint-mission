@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ReadStatusRepository {
-    void save(ReadStatus readStatus);
+    ReadStatus save(ReadStatus readStatus);
     Optional<ReadStatus> findById(UUID id);
     List<ReadStatus> findAll();
     void delete(UUID id);

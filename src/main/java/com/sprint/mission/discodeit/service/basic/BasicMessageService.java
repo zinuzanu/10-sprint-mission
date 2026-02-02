@@ -87,13 +87,13 @@ public class BasicMessageService implements MessageService {
         messageRepository.deleteById(messageId);
     }
 
-    // [헬퍼 메서드] 메세지 존재 여부를 검증하고 엔티티를 반환 (중복 코드 제거 및 예외 처리 공통화)
+    // [헬퍼 메서드]: 메세지 존재 여부를 검증하고 엔티티를 반환 (중복 코드 제거 및 예외 처리 공통화)
     private Message findMessageEntityById(UUID id) {
         return messageRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 메세지 입니다."));
     }
 
-    // [헬퍼 메서드] 요구사항에 맞는 Response DTO 변환
+    // [헬퍼 메서드]: 요구사항에 맞는 Response DTO 변환
     private MessageDto.Response convertToResponse(Message message) {
         return new MessageDto.Response(
                 message.getId(),

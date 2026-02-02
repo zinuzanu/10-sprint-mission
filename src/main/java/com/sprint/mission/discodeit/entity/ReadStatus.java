@@ -18,7 +18,7 @@ public class ReadStatus extends BaseEntity { private static final long serialVer
         this.lastReadAt = lastReadAt;
     }
 
-    public void updateLastReadAt() {
+    public void update(Instant lastReadAt) {
         this.lastReadAt = Instant.now();
         super.update();
     }
