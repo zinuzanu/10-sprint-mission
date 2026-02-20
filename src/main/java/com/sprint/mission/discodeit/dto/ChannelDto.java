@@ -7,27 +7,35 @@ import java.util.List;
 import java.util.UUID;
 
 public class ChannelDto {
-    public record CreatePublicRequest(
-            String name,
-            String description
-    ) {}
 
-    public record CreatePrivateRequest(
-            List<UUID> memberIds
-    ) {}
+  public record CreatePublicRequest(
+      String name,
+      String description
+  ) {
 
-    public record UpdateRequest(
-            UUID id,
-            String name,
-            String description
-    ) {}
+  }
 
-    public record Response(
-            UUID id,
-            String name,
-            String description,
-            ChannelType type,
-            Instant lastMessageAt,
-            List<UUID> memberIds
-    ) {}
+  public record CreatePrivateRequest(
+      List<UUID> memberIds
+  ) {
+
+  }
+
+  public record UpdateRequest(
+      String newName,
+      String newDescription
+  ) {
+
+  }
+
+  public record Response(
+      UUID id,
+      String name,
+      String description,
+      ChannelType type,
+      Instant lastMessageAt,
+      List<UUID> memberIds
+  ) {
+
+  }
 }
