@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.ChannelDto;
 import com.sprint.mission.discodeit.service.ChannelService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
@@ -48,6 +49,7 @@ public class ChannelController {
   @Operation(summary = "채널 정보 수정", description = "기존 채널의 이름이나 설명을 수정합니다.")
   @PatchMapping("/{channelId}")
   public ChannelDto.Response update(
+      @Parameter(description = "수정할 채널의 UUID", required = true)
       @PathVariable UUID channelId,
       @RequestBody ChannelDto.UpdateRequest request) {
     return channelService.update(channelId, request);
@@ -56,13 +58,17 @@ public class ChannelController {
   @Operation(summary = "채널 삭제", description = "특정 채널을 시스템에서 삭제합니다.")
   @DeleteMapping("/{channelId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void delete(@PathVariable UUID channelId) {
+  public void delete(
+      @Parameter(description = "삭제할 채널의 UUID", required = true)
+      @PathVariable UUID channelId) {
     channelService.delete(channelId);
   }
 
   @Operation(summary = "유저별 채널 목록 조회", description = "특정 유저가 참여하고 있는 모든 채널 목록을 가져옵니다.")
   @GetMapping
-  public List<ChannelDto.Response> getChannelsByUserId(@RequestParam UUID userId) {
+  public List<ChannelDto.Response> getChannelsByUserId(
+      @Parameter(description = "조회할 유저의 UUID", required = true)
+      @RequestParam UUID userId) {
     return channelService.findAllByUserId(userId);
   }
   // TODO: 채널 입장과 퇴장 로직 구현 예졍

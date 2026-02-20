@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.MessageDto;
 import com.sprint.mission.discodeit.service.MessageService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,7 @@ public class MessageController {
   @ResponseStatus(HttpStatus.CREATED)
   public MessageDto.Response create(
       @RequestPart("messageCreateRequest") MessageDto.CreateRequest request,
+      @Parameter(description = "첨부할 파일 리스트 (이미지, 문서 등)", example = "image.png")
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
     return messageService.create(request, attachments);
   }
@@ -42,6 +44,7 @@ public class MessageController {
   @Operation(summary = "메시지 수정", description = "이미 보낸 메시지의 본문 내용을 수정합니다.")
   @PatchMapping("/{messageId}")
   public MessageDto.Response update(
+      @Parameter(description = "수정할 메시지의 UUID", required = true)
       @PathVariable UUID messageId,
       @RequestBody MessageDto.UpdateRequest request) {
     return messageService.update(messageId, request);
@@ -50,13 +53,16 @@ public class MessageController {
   @Operation(summary = "메시지 삭제", description = "특정 메시지를 시스템에서 영구적으로 삭제합니다.")
   @DeleteMapping("/{messageId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void delete(@PathVariable UUID messageId) {
+  public void delete(
+      @Parameter(description = "삭제할 메시지의 UUID", required = true)
+      @PathVariable UUID messageId) {
     messageService.delete(messageId);
   }
 
   @Operation(summary = "특정 채널 메시지 목록 조회", description = "특정 채널의 모든 메시지 내역을 조회합니다.")
   @GetMapping
   public List<MessageDto.Response> findAllByChannelId(
+      @Parameter(description = "조회할 채널의 UUID", required = true)
       @RequestParam UUID channelId) {
     return messageService.findAllByChannelId(channelId);
   }

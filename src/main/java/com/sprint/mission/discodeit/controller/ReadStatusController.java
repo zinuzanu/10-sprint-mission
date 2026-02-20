@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.ReadStatusDto;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +37,7 @@ public class ReadStatusController {
   @Operation(summary = "특정 채널 메세지 수신 정보 수정", description = "사용자가 메시지를 어디까지 읽었는지(마지막 읽은 시각)를 수정합니다.")
   @PatchMapping("/{readStatusId}")
   public ReadStatusDto.Response update(
+      @Parameter(description = "수정할 수신 정보의 UUID", required = true)
       @PathVariable UUID readStatusId,
       @RequestBody ReadStatusDto.UpdateRequest request) {
     return readStatusService.update(readStatusId, request);
@@ -43,7 +45,9 @@ public class ReadStatusController {
 
   @Operation(summary = "특정 사용자 메세지 수신 정보 조회", description = "특정 사용자가 참여 중인 모든 채널의 읽음 상태 정보를 조회합니다.")
   @GetMapping
-  public List<ReadStatusDto.Response> findAllByUserId(@RequestParam UUID userId) {
+  public List<ReadStatusDto.Response> findAllByUserId(
+      @Parameter(description = "조회 대상 사용자의 UUID", required = true)
+      @RequestParam UUID userId) {
     return readStatusService.findAllByUserId(userId);
   }
 }

@@ -5,6 +5,7 @@ import com.sprint.mission.discodeit.dto.UserStatusDto;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +39,7 @@ public class UserController {
   @ResponseStatus(HttpStatus.CREATED)
   public UserDto.Response create(
       @RequestPart("userCreateRequest") UserDto.CreateRequest request,
+      @Parameter(description = "유저 프로필 이미지 파일 (선택 사항)")
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     return userService.create(request, profile);
   }
@@ -45,8 +47,10 @@ public class UserController {
   @Operation(summary = "유저 정보 수정", description = "특정 유저의 닉네임, 이메일, 비밀번호 및 프로필 이미지를 수정합니다.")
   @PatchMapping(value = "/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public UserDto.Response update(
+      @Parameter(description = "수정할 유저의 UUID", required = true)
       @PathVariable UUID userId,
       @RequestPart("userUpdateRequest") UserDto.UpdateRequest request,
+      @Parameter(description = "새로운 프로필 이미지 파일 (선택 사항)")
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
     return userService.update(userId, request, profile);
   }
@@ -54,7 +58,9 @@ public class UserController {
   @Operation(summary = "유저 삭제", description = "시스템에서 유저 정보를 영구적으로 삭제합니다.")
   @DeleteMapping("/{userId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void delete(@PathVariable UUID userId) {
+  public void delete(
+      @Parameter(description = "삭제할 유저의 UUID", required = true)
+      @PathVariable UUID userId) {
     userService.delete(userId);
   }
 
@@ -67,6 +73,7 @@ public class UserController {
   @Operation(summary = "유저 온라인 상태 업데이트", description = "유저의 접속 상태 정보를 최신화합니다.")
   @PatchMapping("/{userId}/userStatus")
   public UserStatusDto.Response updateUserStatusByUserId(
+      @Parameter(description = "상태를 변경할 유저의 UUID", required = true)
       @PathVariable UUID userId,
       @RequestBody UserStatusDto.UpdateRequest request) {
     return userStatusService.update(userId, request);
