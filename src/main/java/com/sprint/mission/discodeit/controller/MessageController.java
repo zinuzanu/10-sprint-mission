@@ -1,41 +1,51 @@
 package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.MessageDto;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.service.MessageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
 public class MessageController {
-    private final MessageService messageService;
 
-    @RequestMapping(method = RequestMethod.POST)
-    public MessageDto.Response create(@RequestBody MessageDto.CreateRequest request) {
-        return messageService.create(request);
-    }
+  private final MessageService messageService;
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
-    public MessageDto.Response update(@PathVariable UUID id,
-                                      @RequestBody MessageDto.UpdateRequest request) {
-        if (!id.equals(request.id())) throw new BusinessException(ErrorCode.PATH_ID_MISMATCH);
+  // 메시지 생성
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
+  public MessageDto.Response create(
+      @RequestPart("messageCreateRequest") MessageDto.CreateRequest request,
+      @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
+    return messageService.create(request, attachments);
+  }
 
-        return messageService.update(request);
-    }
+  // 메시지 수정
+  @PatchMapping("/{messageId}")
+  public MessageDto.Response update(
+      @PathVariable UUID messageId,
+      @RequestBody MessageDto.UpdateRequest request) {
+    return messageService.update(messageId, request);
+  }
 
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public void delete(@PathVariable UUID id) {
-        messageService.delete(id);
-    }
+  // 메시지 삭제
+  @DeleteMapping("/{messageId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable UUID messageId) {
+    messageService.delete(messageId);
+  }
 
-    @RequestMapping(method = RequestMethod.GET)
-    public List<MessageDto.Response> findAllByChannelId(@RequestParam(name = "channelId") UUID channelId) {
-        return messageService.findAllByChannelId(channelId);
-    }
+  // 특정 채널 메세지 목록 조회
+  @GetMapping
+  public List<MessageDto.Response> findAllByChannelId(
+      @RequestParam UUID channelId) {
+    return messageService.findAllByChannelId(channelId);
+  }
 }

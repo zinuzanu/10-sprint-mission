@@ -42,12 +42,14 @@ public class ChannelController {
     return channelService.update(channelId, request);
   }
 
+  // 채널 삭제
   @DeleteMapping("/{channelId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable UUID channelId) {
     channelService.delete(channelId);
   }
 
+  // 특정 유저 모든 채널 목록 조회
   @GetMapping
   public List<ChannelDto.Response> getChannelsByUserId(@RequestParam UUID userId) {
     return channelService.findAllByUserId(userId);

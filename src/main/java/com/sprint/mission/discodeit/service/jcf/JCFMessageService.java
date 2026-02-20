@@ -21,7 +21,7 @@
 //    }
 //
 //    @Override
-//    public Message createPublicChannel(UUID authorId, UUID channelId, String content) {
+//    public Message createPublicChannel(UUID authorId, UUID channelId, String newContent) {
 //        User user = userService.findById(authorId);
 //        Channel channel = channelService.findById(channelId);
 //
@@ -29,7 +29,7 @@
 //            throw new IllegalStateException("해당 채널에 속해 있지 않으므로 메세지를 보낼 수 없습니다.");
 //        }
 //
-//        Message message = new Message(user, channel, content);
+//        Message message = new Message(user, channel, newContent);
 //        messages.add(message);
 //        return message;
 //    }
@@ -58,9 +58,9 @@
 //    }
 //
 //    @Override
-//    public Message update(UUID id, String content) {
+//    public Message update(UUID id, String newContent) {
 //        Message updateContent = findById(id);
-//        updateContent.updateMessage(content);
+//        updateContent.updateMessage(newContent);
 //        return updateContent;
 //    }
 //
