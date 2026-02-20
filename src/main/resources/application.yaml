@@ -6,3 +6,16 @@ discodeit:
   repository:
     type: file
     file-directory: .discodeit
+
+# Swagger (SpringDoc) 설정 추가
+springdoc:
+  swagger-ui:
+    path: /docs                     # Swagger UI 접속 경로: http://localhost:8080/docs
+    display-request-duration: true  # API 요청 실행 시간 표시
+  api-docs:
+    path: /v3/api-docs              # OpenAPI 명세 JSON 경로
+  default-produces-media-type: application/json
+  info:
+    title: "Discodeit API Document"
+    description: "실시간 채팅 서비스 Discodeit의 서버 API 명세서입니다."
+    version: "1.0.0"
