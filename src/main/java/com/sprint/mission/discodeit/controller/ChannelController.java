@@ -2,13 +2,24 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.ChannelDto;
 import com.sprint.mission.discodeit.service.ChannelService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "2. 채팅 관리", description = "채널 생성, 수정, 삭제 및 조회 API")
 @RestController
 @RequestMapping("/api/channels")
 @RequiredArgsConstructor
@@ -16,8 +27,8 @@ public class ChannelController {
 
   private final ChannelService channelService;
 
-  // 공개 채널 생성
   // TODO: 채널 생성자 정보가 없으므로 로직 추가 예정. (채널을 누가 만들었는지 모름)
+  @Operation(summary = "공개 채널 생성", description = "누구나 참여할 수 있는 공개 채널을 생성합니다. (생성자 정보 기록 로직 추가 예정)")
   @PostMapping("/public")
   @ResponseStatus(HttpStatus.CREATED)
   public ChannelDto.Response createPublicChannel(
@@ -25,8 +36,8 @@ public class ChannelController {
     return channelService.createPublicChannel(createPublicRequest);
   }
 
-  // 비공개 채널 생성
   // TODO: UUID 형식이 맞으면 비공개 채널 생성이 가능한 상태, 추후 전역 처리 시 검증 로직 추가 예정
+  @Operation(summary = "비공개 채널 생성", description = "특정 사용자들만 참여하는 비공개 채널을 생성합니다.")
   @PostMapping("/private")
   @ResponseStatus(HttpStatus.CREATED)
   public ChannelDto.Response createPrivateChannel(
@@ -34,7 +45,7 @@ public class ChannelController {
     return channelService.createPrivateChannel(createPrivateRequest);
   }
 
-  // 채널 정보 수정
+  @Operation(summary = "채널 정보 수정", description = "기존 채널의 이름이나 설명을 수정합니다.")
   @PatchMapping("/{channelId}")
   public ChannelDto.Response update(
       @PathVariable UUID channelId,
@@ -42,14 +53,14 @@ public class ChannelController {
     return channelService.update(channelId, request);
   }
 
-  // 채널 삭제
+  @Operation(summary = "채널 삭제", description = "특정 채널을 시스템에서 삭제합니다.")
   @DeleteMapping("/{channelId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable UUID channelId) {
     channelService.delete(channelId);
   }
 
-  // 특정 유저 모든 채널 목록 조회
+  @Operation(summary = "유저별 채널 목록 조회", description = "특정 유저가 참여하고 있는 모든 채널 목록을 가져옵니다.")
   @GetMapping
   public List<ChannelDto.Response> getChannelsByUserId(@RequestParam UUID userId) {
     return channelService.findAllByUserId(userId);

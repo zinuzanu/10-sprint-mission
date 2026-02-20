@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "User", description = "사용자 계정 생성, 수정, 삭제 및 상태 관리 API")
+@Tag(name = "1. 사용자 및 인증 그룹", description = "사용자 계정 생성, 수정, 삭제 및 상태 관리 API")
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
