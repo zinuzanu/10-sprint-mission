@@ -2,57 +2,66 @@ package com.sprint.mission.discodeit.controller;
 
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.dto.UserStatusDto;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.service.UserStatusService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserService userService;
-    private final UserStatusService userStatusService;
 
-    // 유저 등록
-    @RequestMapping(method = RequestMethod.POST)
-    public UserDto.Response create(@RequestBody UserDto.CreateRequest request) {
-        return userService.create(request);
-    }
+  private final UserService userService;
+  private final UserStatusService userStatusService;
 
-    // 유저 정보 수정
-    @RequestMapping(value = "/{id}", method = RequestMethod.PATCH)
-    public UserDto.Response update(@PathVariable UUID id,
-                                   @RequestBody UserDto.UpdateRequest request) {
-        if (!id.equals(request.id())) throw new BusinessException(ErrorCode.PATH_ID_MISMATCH);
+  // 유저 등록
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
+  public UserDto.Response create(
+      @RequestPart("userCreateRequest") UserDto.CreateRequest request,
+      @RequestPart(value = "profile", required = false) MultipartFile profile) {
+    return userService.create(request, profile);
+  }
 
-        return userService.update(request);
-    }
+  // 유저 정보 수정
+  @PatchMapping(value = "/{userId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public UserDto.Response update(
+      @PathVariable UUID userId,
+      @RequestPart("userUpdateRequest") UserDto.UpdateRequest request,
+      @RequestPart(value = "profile", required = false) MultipartFile profile) {
+    return userService.update(userId, request, profile);
+  }
 
-    // 유저 삭제
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public void delete(@PathVariable UUID id) {
-        userService.delete(id);
-    }
+  // 유저 삭제
+  @DeleteMapping("/{userId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable UUID userId) {
+    userService.delete(userId);
+  }
 
-    // 모든 유저 조회
-    @RequestMapping(value = "/findAll", method = RequestMethod.GET)
-    public ResponseEntity<List<UserDto.Response>> findAll() {
-        return ResponseEntity.ok(userService.findAll());
-    }
+  // 모든 유저 조회
+  @GetMapping
+  public ResponseEntity<List<UserDto.Response>> findAll() {
+    return ResponseEntity.ok(userService.findAll());
+  }
 
-    // 유저 온라인 상태 업데이트
-    @RequestMapping(value = "/{id}/status", method = RequestMethod.PATCH)
-    public UserStatusDto.Response updateStatus(@PathVariable UUID id,
-                             @RequestBody UserStatusDto.UpdateRequest request) {
-        if (!id.equals(request.id())) throw new BusinessException(ErrorCode.PATH_ID_MISMATCH);
-
-        return userStatusService.update(request);
-    }
+  // 유저 온라인 상태 업데이트
+  @PatchMapping("/{userId}/userStatus")
+  public UserStatus updateUserStatusByUserId(
+      @PathVariable UUID userId,
+      @RequestBody UserStatusDto.UpdateRequest request) {
+    return userStatusService.update(userId, request);
+  }
 }

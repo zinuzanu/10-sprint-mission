@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.*;
 import com.sprint.mission.discodeit.service.UserService;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,165 +16,174 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 public class BasicUserService implements UserService {
-    private final UserRepository userRepository;
-    private final ChannelRepository channelRepository;
-    private final MessageRepository messageRepository;
-    private final UserStatusRepository  userStatusRepository;
-    private final BinaryContentRepository  binaryContentRepository;
 
-    @Override
-    public UserDto.Response create(UserDto.CreateRequest request) {
-        validateDuplicateEmail(request.email());
-        validateDuplicateUserName(request.username());
+  private final UserRepository userRepository;
+  private final ChannelRepository channelRepository;
+  private final MessageRepository messageRepository;
+  private final UserStatusRepository userStatusRepository;
+  private final BinaryContentRepository binaryContentRepository;
 
-        UUID profileImageId = processImage(null, request.profileImage());
+  @Override
+  public UserDto.Response create(UserDto.CreateRequest request, MultipartFile profile) {
+    validateDuplicateEmail(request.email());
+    validateDuplicateUserName(request.username());
 
-        User newUser = new User(
-                request.username(),
-                request.email(),
-                request.password(),
-                profileImageId
-        );
-        userRepository.save(newUser);
+    UUID profileImageId = processImage(null, profile);
 
-        if (userStatusRepository != null)  {
-            UserStatus status = new UserStatus(newUser.getId(), Instant.now());
-            userStatusRepository.save(status);
-        }
+    User newUser = new User(
+        request.username(),
+        request.email(),
+        request.password(),
+        profileImageId
+    );
+    userRepository.save(newUser);
 
-        return convertToResponse(newUser);
+    if (userStatusRepository != null) {
+      UserStatus status = new UserStatus(newUser.getId(), Instant.now());
+      userStatusRepository.save(status);
     }
 
-    @Override
-    public UserDto.Response findById(UUID id) {
-        User user = findUserEntityById(id);
-        return convertToResponse(user);
+    return convertToResponse(newUser);
+  }
+
+  @Override
+  public UserDto.Response findById(UUID id) {
+    User user = findUserEntityById(id);
+    return convertToResponse(user);
+  }
+
+  @Override
+  public List<UserDto.Response> findAll() {
+    return userRepository.findAll().stream()
+        .map(this::convertToResponse)
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public List<User> findUsersByChannelId(UUID channelId) {
+    List<UUID> memberIds = channelRepository.findById(channelId)
+        .map(channel -> channel.getMemberIds())
+        .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+    return memberIds.stream()
+        .map(this::findUserEntityById)
+        .collect(Collectors.toList());
+  }
+
+  @Override
+  public UserDto.Response update(UUID userId, UserDto.UpdateRequest request,
+      MultipartFile profile) {
+    User user = findUserEntityById(userId);
+
+    if (request.newEmail() != null && !request.newEmail().equals(user.getEmail())) {
+      validateDuplicateEmail(request.newEmail());
     }
 
-    @Override
-    public List<UserDto.Response> findAll() {
-        return userRepository.findAll().stream()
-                .map(this::convertToResponse)
-                .collect(Collectors.toList());
+    UUID newProfileId = processImage(user.getProfileId(), profile);
+
+    user.update(
+        request.newUsername(),
+        request.newEmail(),
+        request.newPassword(),
+        newProfileId
+    );
+
+    userRepository.save(user);
+    return convertToResponse(user);
+  }
+
+  @Override
+  public void delete(UUID userId) {
+    User user = findUserEntityById(userId);
+
+    messageRepository.findAll().stream()
+        .filter(m -> userId.equals(m.getAuthorId()))
+        .forEach(m -> messageRepository.deleteById(m.getId()));
+
+    channelRepository.findAll().forEach(channel -> {
+      if (channel.getMemberIds().contains(userId)) {
+        channel.removeMember(userId);
+        channelRepository.save(channel);
+      }
+    });
+
+    if (user.getProfileId() != null && binaryContentRepository != null) {
+      binaryContentRepository.deleteById(user.getProfileId());
     }
 
-    @Override
-    public List<User> findUsersByChannelId(UUID channelId) {
-        List<UUID> memberIds = channelRepository.findById(channelId)
-                .map(channel -> channel.getMemberIds())
-                .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
-        return memberIds.stream()
-                .map(this::findUserEntityById)
-                .collect(Collectors.toList());
+    if (userStatusRepository != null) {
+      userStatusRepository.deleteById(user.getId());
     }
 
-    @Override
-    public UserDto.Response update(UserDto.UpdateRequest request) {
-        User user = findUserEntityById(request.id());
+    userRepository.deleteById(userId);
+  }
 
-        if (request.email() != null && !request.email().equals(user.getEmail())) {
-            validateDuplicateEmail(request.email());
-        }
+  // 이메일 중복 시 예외를 던져 가입 중단 (Fail-Fast)
+  private void validateDuplicateEmail(String userEmail) {
+    if (userRepository.findByEmail(userEmail).isPresent()) {
+      throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+    }
+  }
 
-        UUID newProfileId = processImage(user.getProfileId(), request.profileImage());
+  // 이름 중복 시 예외를 던져 가입 중단 (Fail-Fast)
+  private void validateDuplicateUserName(String username) {
+    if (userRepository.findByUsername(username).isPresent()) {
+      throw new BusinessException(ErrorCode.DUPLICATE_USERNAME);
+    }
+  }
 
-        user.update(
-                request.username(),
-                request.email(),
-                request.password(),
-                newProfileId
-        );
+  // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
+  private User findUserEntityById(UUID id) {
+    return userRepository.findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  }
 
-        userRepository.save(user);
-        return convertToResponse(user);
+  // [헬퍼 메서드]: 엔티티를 클라이언트 응답용 DTO로 변환 및 데이터 가공
+  private UserDto.Response convertToResponse(User user) {
+    boolean isOnline = false;
+    if (userStatusRepository != null) {
+      isOnline = userStatusRepository.findById(user.getId())
+          .map(status -> status.isOnline())
+          .orElse(false);
+    }
+    return new UserDto.Response(
+        user.getId(),
+        user.getCreatedAt(),
+        user.getUpdatedAt(),
+        user.getUsername(),
+        user.getEmail(),
+        user.getProfileId(),
+        isOnline
+    );
+  }
+
+  // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(update)
+  private UUID processImage(UUID existingId, MultipartFile file) {
+    if (file == null || binaryContentRepository == null) {
+      return existingId;
     }
 
-    @Override
-    public void delete(UUID userId) {
-        User user = findUserEntityById(userId);
-
-        messageRepository.findAll().stream()
-                .filter(m -> userId.equals(m.getAuthorId()))
-                        .forEach(m -> messageRepository.deleteById(m.getId()));
-
-        channelRepository.findAll().forEach(channel -> {
-            if (channel.getMemberIds().contains(userId)) {
-                channel.removeMember(userId);
-                channelRepository.save(channel);
-            }
-        });
-
-        if (user.getProfileId() != null && binaryContentRepository != null) {
-            binaryContentRepository.deleteById(user.getProfileId());
-        }
-
-        if (userStatusRepository != null) {
-            userStatusRepository.deleteById(user.getId());
-        }
-
-        userRepository.deleteById(userId);
+    // 기존 이미지가 있으면 삭제 (Update)
+    if (existingId != null) {
+      binaryContentRepository.deleteById(existingId);
     }
 
-    // 이메일 중복 시 예외를 던져 가입 중단 (Fail-Fast)
-    private void validateDuplicateEmail(String userEmail) {
-        if (userRepository.findByEmail(userEmail).isPresent()) {
-            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
-        }
+    try {
+      // 새 이미지 저장
+      BinaryContent newImage = new BinaryContent(
+          UUID.randomUUID(),
+          file.getOriginalFilename(),
+          file.getBytes(),
+          Instant.now()
+      );
+      binaryContentRepository.save(newImage);
+      return newImage.getId();
+    } catch (IOException e) {
+      throw new BusinessException(ErrorCode.FILE_SAVE_ERROR);
     }
-
-    // 이름 중복 시 예외를 던져 가입 중단 (Fail-Fast)
-    private void validateDuplicateUserName(String username) {
-        if (userRepository.findByUsername(username).isPresent()) {
-            throw new BusinessException(ErrorCode.DUPLICATE_USERNAME);
-        }
-    }
-
-    // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
-    private User findUserEntityById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    // [헬퍼 메서드]: 엔티티를 클라이언트 응답용 DTO로 변환 및 데이터 가공
-    private UserDto.Response convertToResponse(User user) {
-        boolean isOnline = false;
-        if (userStatusRepository != null) {
-            isOnline = userStatusRepository.findById(user.getId())
-                    .map(status -> status.isOnline())
-                    .orElse(false);
-        }
-        return new UserDto.Response(
-                user.getId(),
-                user.getCreatedAt(),
-                user.getUpdatedAt(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getProfileId(),
-                isOnline
-        );
-    }
-
-    // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(update)
-    private UUID processImage(UUID existingId, UserDto.BinaryContentDto imageDto) {
-        if (imageDto == null || binaryContentRepository == null) return existingId;
-
-        // 기존 이미지가 있으면 삭제 (Update)
-        if (existingId != null) {
-            binaryContentRepository.deleteById(existingId);
-        }
-
-        // 새 이미지 저장
-        BinaryContent newImage = new BinaryContent(
-                UUID.randomUUID(),
-                imageDto.fileName(),
-                imageDto.data(),
-                Instant.now()
-        );
-        binaryContentRepository.save(newImage);
-        return newImage.getId();
-    }
+  }
 }
