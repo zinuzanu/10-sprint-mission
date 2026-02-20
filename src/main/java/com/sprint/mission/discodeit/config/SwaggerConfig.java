@@ -31,7 +31,7 @@ public class SwaggerConfig {
   public GroupedOpenApi resourceGroup() {
     return GroupedOpenApi.builder()
         .group("3. 리소스 관리") // 파일(바이너리) 전용 그룹
-        .pathsToMatch("/api/binary-contents/**")
+        .pathsToMatch("/api/binaryContents/**")
         .build();
   }
 }

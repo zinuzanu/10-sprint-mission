@@ -18,6 +18,7 @@ public class MessageDto {
 
   }
 
+  @Schema(name = "MessageUpdateRequest")
   public record UpdateRequest(
       @Schema(description = "수정할 메시지 내용", example = "오늘 날씨가 춥네요!!")
       String newContent

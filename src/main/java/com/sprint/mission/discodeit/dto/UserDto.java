@@ -27,7 +27,7 @@ public class UserDto {
   }
 
   public record UpdateRequest(
-      @Schema(description = "새로운 사용자 이름", example = "new_username")
+      @Schema(description = "새로운 사용자 이름", example = "new_name")
       String newUsername,
       @Schema(description = "새로운 이메일 주소", example = "new_Test@gmail.com")
       String newEmail,

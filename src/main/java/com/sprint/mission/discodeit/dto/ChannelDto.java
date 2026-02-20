@@ -24,6 +24,7 @@ public class ChannelDto {
 
   }
 
+  @Schema(name = "ChannelUpdateRequest")
   public record UpdateRequest(
       @Schema(description = "변경할 채널 이름", example = "스프링-스터디-방")
       String newName,
