@@ -59,7 +59,7 @@ public class UserController {
 
   // 유저 온라인 상태 업데이트
   @PatchMapping("/{userId}/userStatus")
-  public UserStatus updateUserStatusByUserId(
+  public UserStatusDto.Response updateUserStatusByUserId(
       @PathVariable UUID userId,
       @RequestBody UserStatusDto.UpdateRequest request) {
     return userStatusService.update(userId, request);
