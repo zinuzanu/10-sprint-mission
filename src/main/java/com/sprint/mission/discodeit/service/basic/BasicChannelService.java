@@ -44,7 +44,7 @@ public class BasicChannelService implements ChannelService {
     );
     Channel saved = channelRepository.save(newChannel);
 
-    request.memberIds().forEach(userId -> {
+    request.participantIds().forEach(userId -> {
       readStatusRepository.save(new ReadStatus(userId, saved.getId(), Instant.now()));
       saved.addMember(userId);
     });

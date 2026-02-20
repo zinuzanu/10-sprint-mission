@@ -16,7 +16,7 @@ public class ChannelDto {
   }
 
   public record CreatePrivateRequest(
-      List<UUID> memberIds
+      List<UUID> participantIds
   ) {
 
   }
