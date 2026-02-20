@@ -4,17 +4,25 @@ import java.time.Instant;
 import java.util.UUID;
 
 public class BinaryContentDto {
-    public record CreateRequest(
-            UUID id,
-            String fileName,
-            byte[] data,
-            Instant createAt
-    ) {}
 
-    public record Response(
-            UUID id,
-            String fileName,
-            byte[] data,
-            Instant createdAt
-    ) {}
+  public record CreateRequest(
+      String fileName,
+      byte[] bytes,
+      Long size,
+      String contentType,
+      Instant createdAt
+  ) {
+
+  }
+
+  public record Response(
+      UUID id,
+      Instant createdAt,
+      String fileName,
+      Long size,
+      String contentType,
+      byte[] bytes
+  ) {
+
+  }
 }

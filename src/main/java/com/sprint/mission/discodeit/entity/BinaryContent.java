@@ -9,30 +9,40 @@ import java.util.UUID;
 
 @Getter
 public class BinaryContent implements Serializable {
-    private static final long serialVersionUID = 1L;
 
-    private final UUID id;
-    private final String fileName;
-    private final byte[] data;
-    private final Instant createdAt;
+  private static final long serialVersionUID = 1L;
 
-    public BinaryContent(UUID id, String fileName, byte[] data, Instant createdAt) {
-        this.id = id;
-        this.fileName = fileName;
-        this.data = data;
-        this.createdAt = (createdAt != null) ? createdAt : Instant.now();
+  private final UUID id;
+  private final Instant createdAt;
+  private final String fileName;
+  private final Long size;
+  private final String contentType;
+  private final byte[] bytes;
+
+  public BinaryContent(UUID id, Instant createdAt, String fileName, Long size, String contentType,
+      byte[] bytes) {
+    this.id = id;
+    this.createdAt = (createdAt != null) ? createdAt : Instant.now();
+    this.fileName = fileName;
+    this.size = size;
+    this.contentType = contentType;
+    this.bytes = bytes;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BinaryContent)) return false;
-        BinaryContent that = (BinaryContent) o;
-        return Objects.equals(id, that.id);
+    if (!(o instanceof BinaryContent)) {
+      return false;
     }
+    BinaryContent that = (BinaryContent) o;
+    return Objects.equals(id, that.id);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
+  }
 }

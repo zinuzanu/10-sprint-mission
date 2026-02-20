@@ -46,9 +46,11 @@ public class BasicMessageService implements MessageService {
         try {
           BinaryContent content = new BinaryContent(
               UUID.randomUUID(),
+              Instant.now(),
               file.getOriginalFilename(),
-              file.getBytes(),
-              Instant.now()
+              file.getSize(),
+              file.getContentType(),
+              file.getBytes()
           );
           binaryContentRepository.save(content);
           attachmentIds.add(content.getId());
