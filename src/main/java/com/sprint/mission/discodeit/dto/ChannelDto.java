@@ -46,7 +46,7 @@ public class ChannelDto {
       @Schema(description = "마지막 메시지 전송 시각", example = "2026-02-20T08:30:00Z")
       Instant lastMessageAt,
       @Schema(description = "채널 멤버 ID 리스트")
-      List<UUID> memberIds
+      List<UUID> participantIds
   ) {
 
   }

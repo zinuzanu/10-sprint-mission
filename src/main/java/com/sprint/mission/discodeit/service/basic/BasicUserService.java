@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessException;
@@ -27,6 +28,7 @@ public class BasicUserService implements UserService {
   private final MessageRepository messageRepository;
   private final UserStatusRepository userStatusRepository;
   private final BinaryContentRepository binaryContentRepository;
+  private final ReadStatusRepository readStatusRepository;
 
   @Override
   public UserDto.Response create(UserDto.CreateRequest request, MultipartFile profile) {
@@ -67,7 +69,7 @@ public class BasicUserService implements UserService {
   @Override
   public List<User> findUsersByChannelId(UUID channelId) {
     List<UUID> memberIds = channelRepository.findById(channelId)
-        .map(channel -> channel.getMemberIds())
+        .map(Channel::getMemberIds)
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
     return memberIds.stream()
         .map(this::findUserEntityById)
@@ -98,12 +100,15 @@ public class BasicUserService implements UserService {
 
   @Override
   public void delete(UUID userId) {
+    // 0. 삭제 대상 조회
     User user = findUserEntityById(userId);
 
+    // 1. 유저가 작성한 메시지 삭제
     messageRepository.findAll().stream()
         .filter(m -> userId.equals(m.getAuthorId()))
         .forEach(m -> messageRepository.deleteById(m.getId()));
 
+    // 2. 채널에서 유저 제거
     channelRepository.findAll().forEach(channel -> {
       if (channel.getMemberIds().contains(userId)) {
         channel.removeMember(userId);
@@ -111,14 +116,26 @@ public class BasicUserService implements UserService {
       }
     });
 
+    // 2-1. 유저의 채널 참여 정보(ReadStatus) 삭제
+    readStatusRepository.findAll().stream()
+        .filter(rs -> userId.equals(rs.getUserId()))
+        .forEach(rs -> readStatusRepository.deleteById(rs.getId()));
+
+    // 3. 바이너리 파일 삭제 (프로필 이미지)
     if (user.getProfileId() != null && binaryContentRepository != null) {
       binaryContentRepository.deleteById(user.getProfileId());
     }
 
+    // 4. 유저 상태 정보 삭제
     if (userStatusRepository != null) {
-      userStatusRepository.deleteById(user.getId());
+      userStatusRepository.findAll().stream()
+          .filter(us -> userId.equals(us.getUserId()))
+          .findFirst()
+          .ifPresent(us ->
+              userStatusRepository.deleteById(us.getId()));
     }
 
+    // 5. 유저 삭제
     userRepository.deleteById(userId);
   }
 
@@ -144,9 +161,9 @@ public class BasicUserService implements UserService {
 
   // [헬퍼 메서드]: 엔티티를 클라이언트 응답용 DTO로 변환 및 데이터 가공
   private UserDto.Response convertToResponse(User user) {
-    boolean isOnline = false;
+    boolean online = false;
     if (userStatusRepository != null) {
-      isOnline = userStatusRepository.findById(user.getId())
+      online = userStatusRepository.findById(user.getId())
           .map(status -> status.isOnline())
           .orElse(false);
     }
@@ -157,7 +174,7 @@ public class BasicUserService implements UserService {
         user.getUsername(),
         user.getEmail(),
         user.getProfileId(),
-        isOnline
+        online
     );
   }
 

@@ -51,9 +51,7 @@ public class BasicUserStatusService implements UserStatusService {
 
   @Override
   public UserStatusDto.Response update(UUID userId, UpdateRequest request) {
-    UserStatus userStatus = findUserStatusEntityById(userId);
-    userStatus.update(request.lastOnlineAt());
-    return convertToResponse(userStatusRepository.save(userStatus));
+    return updateByUserId(userId, request.newLastActiveAt());
   }
 
   @Override
@@ -61,7 +59,7 @@ public class BasicUserStatusService implements UserStatusService {
     UserStatus userStatus = userStatusRepository.findAll().stream()
         .filter(us -> us.getUserId().equals(userId))
         .findFirst()
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+        .orElseGet(() -> userStatusRepository.save(new UserStatus(userId, Instant.MIN)));
 
     userStatus.update(lastOnlineAt);
     return convertToResponse(userStatusRepository.save(userStatus));

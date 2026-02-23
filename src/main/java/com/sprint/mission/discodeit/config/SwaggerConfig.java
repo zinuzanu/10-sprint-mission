@@ -22,7 +22,7 @@ public class SwaggerConfig {
   public GroupedOpenApi chatGroup() {
     return GroupedOpenApi.builder()
         .group("2. 채팅 관리")
-        .pathsToMatch("/api/channels/**", "/api/messages/**", "/api/read-statuses/**")
+        .pathsToMatch("/api/channels/**", "/api/messages/**", "/api/readStatuses/**")
         .build();
   }
 

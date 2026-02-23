@@ -45,10 +45,10 @@ public class BasicChannelService implements ChannelService {
     Channel saved = channelRepository.save(newChannel);
 
     request.participantIds().forEach(userId -> {
-      readStatusRepository.save(new ReadStatus(userId, saved.getId(), Instant.now()));
-      saved.addMember(userId);
+      readStatusRepository.save(new ReadStatus(userId, saved.getId(), Instant.MIN));
+//      saved.addMember(userId);
     });
-    channelRepository.save(saved);
+//    channelRepository.save(saved);
     return convertToResponse(saved);
   }
 
@@ -61,8 +61,14 @@ public class BasicChannelService implements ChannelService {
   @Override
   public List<ChannelDto.Response> findAllByUserId(UUID userId) {
     return channelRepository.findAll().stream()
-        .filter(c -> c.getType() == ChannelType.PUBLIC ||
-            isMember(userId, c.getId()))
+        .filter(c -> c.getType() == ChannelType.PUBLIC || isMember(userId, c.getId()))
+
+        // [임시 조치] PRIVATE 채널에서 나를 제외한 참여자가 없는 경우 숨김
+        // [이유] PRIVATE 채널에 유저가 1명만 남은 경우 프론트 화면 분기가 없어 크래시 발생
+        .filter(c -> c.getType() == ChannelType.PUBLIC
+            || readStatusRepository.findAll().stream()
+            .anyMatch(rs -> rs.getChannelId().equals(c.getId())
+                && !rs.getUserId().equals(userId)))
         .map(this::convertToResponse)
         .toList();
   }
@@ -147,9 +153,9 @@ public class BasicChannelService implements ChannelService {
         .orElse(null);
 
     // [추가] 요구사항: PRIVATE인 경우 참여한 User ID 정보 포함
-    List<UUID> memberIds = null;
+    List<UUID> participantIds = List.of();
     if (channel.getType() == ChannelType.PRIVATE) {
-      memberIds = readStatusRepository.findAll().stream()
+      participantIds = readStatusRepository.findAll().stream()
           .filter(rs -> rs.getChannelId().equals(channel.getId()))
           .map(ReadStatus::getUserId)
           .toList();
@@ -161,7 +167,7 @@ public class BasicChannelService implements ChannelService {
         channel.getDescription(),
         channel.getType(),
         lastMessageAt,
-        memberIds
+        participantIds
     );
   }
 }

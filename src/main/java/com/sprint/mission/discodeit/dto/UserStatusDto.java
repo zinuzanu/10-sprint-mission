@@ -19,7 +19,7 @@ public class UserStatusDto {
       @Schema(description = "상태 기록 ID (식별자)", example = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
       UUID id,
       @Schema(description = "업데이트할 온라인 시간", example = "2026-02-20T08:00:00Z")
-      Instant lastOnlineAt
+      Instant newLastActiveAt
   ) {
 
   }
