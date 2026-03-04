@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.UserStatusDto;
 import com.sprint.mission.discodeit.dto.UserStatusDto.UpdateRequest;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
@@ -24,16 +25,15 @@ public class BasicUserStatusService implements UserStatusService {
 
   @Override
   public UserStatusDto.Response create(UserStatusDto.CreateRequest request) {
-    if (!userRepository.existsById(request.userID())) {
-      throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-    }
+    User user = userRepository.findById(request.userID())
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     boolean exists = userStatusRepository.findAll().stream()
-        .anyMatch(us -> us.getUserId().equals(request.userID()));
+        .anyMatch(us -> us.getUser().getId().equals(request.userID()));
     if (exists) {
       throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
     }
-    UserStatus userStatus = new UserStatus(request.userID(), request.lastOnlineAt());
+    UserStatus userStatus = new UserStatus(user, request.lastOnlineAt());
     return convertToResponse(userStatusRepository.save(userStatus));
   }
 
@@ -57,9 +57,13 @@ public class BasicUserStatusService implements UserStatusService {
   @Override
   public UserStatusDto.Response updateByUserId(UUID userId, Instant lastOnlineAt) {
     UserStatus userStatus = userStatusRepository.findAll().stream()
-        .filter(us -> us.getUserId().equals(userId))
+        .filter(us -> us.getUser().getId().equals(userId))
         .findFirst()
-        .orElseGet(() -> userStatusRepository.save(new UserStatus(userId, Instant.MIN)));
+        .orElseGet(() -> {
+          User user = userRepository.findById(userId)
+              .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+          return userStatusRepository.save(new UserStatus(user, Instant.MIN));
+        });
 
     userStatus.update(lastOnlineAt);
     return convertToResponse(userStatusRepository.save(userStatus));
@@ -80,8 +84,8 @@ public class BasicUserStatusService implements UserStatusService {
   private UserStatusDto.Response convertToResponse(UserStatus userStatus) {
     return new UserStatusDto.Response(
         userStatus.getId(),
-        userStatus.getUserId(),
-        userStatus.getLastOnlineAt(),
+        userStatus.getUser().getId(),
+        userStatus.getLastActiveAt(),
         userStatus.isOnline()
     );
   }

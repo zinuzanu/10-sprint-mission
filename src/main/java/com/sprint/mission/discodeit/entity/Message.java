@@ -1,34 +1,31 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import lombok.Getter;
 
 @Getter
-public class Message extends BaseEntity {
+public class Message extends BaseUpdatableEntity {
 
-  private static final long serialVersionUID = 1L;
-
-  private final UUID authorId;
-  private final UUID channelId;
   private String content;
-  private final List<UUID> attachmentIds;
+  private final Channel channel;
+  private final User author;
+  private final List<BinaryContent> attachments;
 
-  public Message(UUID authorId, UUID channelId, String content, List<UUID> attachmentIds) {
-    if (authorId == null || channelId == null) {
+  public Message(User author, Channel channel, String content, List<BinaryContent> attachments) {
+    if (author == null || channel == null) {
       throw new BusinessException(ErrorCode.REQUIRED_PARAMETER_MISSING);
     }
     validateContent(content);
 
-    this.authorId = authorId;
-    this.channelId = channelId;
+    this.author = author;
+    this.channel = channel;
     this.content = content;
-    this.attachmentIds =
-        (attachmentIds != null) ? new ArrayList<>(attachmentIds) : new ArrayList<>();
+    this.attachments =
+        (attachments != null) ? new ArrayList<>(attachments) : new ArrayList<>();
   }
 
   public void update(String newContent) {
@@ -57,6 +54,6 @@ public class Message extends BaseEntity {
   @Override
   public String toString() {
     return String.format("Message[내용: %s, 작성자ID: %s, 채널ID: %s, 첨부 파일 수: %d, Message ID: %s]",
-        content, authorId, channelId, attachmentIds.size(), getId());
+        content, author, channel, attachments.size(), getId());
   }
 }

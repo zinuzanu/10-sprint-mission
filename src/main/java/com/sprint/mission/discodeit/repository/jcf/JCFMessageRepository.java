@@ -11,44 +11,45 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 @ConditionalOnProperty(
-        name = "discodeit.repository.type",
-        havingValue = "jcf",
-        matchIfMissing = true
+    name = "discodeit.repository.type",
+    havingValue = "jcf",
+    matchIfMissing = true
 )
 public class JCFMessageRepository implements MessageRepository {
-    private final Map<UUID, Message> storage = new ConcurrentHashMap<>();
 
-    @Override
-    public Message save(Message message) {
-        storage.put(message.getId(), message);
-        return message;
-    }
+  private final Map<UUID, Message> storage = new ConcurrentHashMap<>();
 
-    @Override
-    public Optional<Message> findById(UUID id) {
-        return Optional.ofNullable(storage.get(id));
-    }
+  @Override
+  public Message save(Message message) {
+    storage.put(message.getId(), message);
+    return message;
+  }
 
-    @Override
-    public List<Message> findAll() {
-        return new ArrayList<>(storage.values());
-    }
+  @Override
+  public Optional<Message> findById(UUID id) {
+    return Optional.ofNullable(storage.get(id));
+  }
 
-    @Override
-    public boolean existsById(UUID id) {
-        return storage.containsKey(id);
-    }
+  @Override
+  public List<Message> findAll() {
+    return new ArrayList<>(storage.values());
+  }
 
-    @Override
-    public void deleteById(UUID id) {
-        storage.remove(id);
-    }
+  @Override
+  public boolean existsById(UUID id) {
+    return storage.containsKey(id);
+  }
 
-    @Override
-    public Optional<Instant> findLatestMessageTimeByChannelId(UUID channelId) {
-        return storage.values().stream()
-                .filter(m -> m.getChannelId().equals(channelId))
-                .map(Message::getCreatedAt)
-                .max(Comparator.naturalOrder());
-    }
+  @Override
+  public void deleteById(UUID id) {
+    storage.remove(id);
+  }
+
+  @Override
+  public Optional<Instant> findLatestMessageTimeByChannelId(UUID channelId) {
+    return storage.values().stream()
+        .filter(m -> m.getChannel().equals(channelId))
+        .map(Message::getCreatedAt)
+        .max(Comparator.naturalOrder());
+  }
 }

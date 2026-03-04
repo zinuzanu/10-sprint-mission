@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.ChannelDto;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -45,10 +46,9 @@ public class BasicChannelService implements ChannelService {
     Channel saved = channelRepository.save(newChannel);
 
     request.participantIds().forEach(userId -> {
-      readStatusRepository.save(new ReadStatus(userId, saved.getId(), Instant.MIN));
-//      saved.addMember(userId);
+      User user = findUserFromExistingReadStatus(userId);
+      readStatusRepository.save(new ReadStatus(user, saved, Instant.MIN));
     });
-//    channelRepository.save(saved);
     return convertToResponse(saved);
   }
 
@@ -62,13 +62,13 @@ public class BasicChannelService implements ChannelService {
   public List<ChannelDto.Response> findAllByUserId(UUID userId) {
     return channelRepository.findAll().stream()
         .filter(c -> c.getType() == ChannelType.PUBLIC || isMember(userId, c.getId()))
-
+/*        // TODO: 어래 임시 필터 로직은 추루 리포지토리/도메인 레이어로 이관 검토
         // [임시 조치] PRIVATE 채널에서 나를 제외한 참여자가 없는 경우 숨김
         // [이유] PRIVATE 채널에 유저가 1명만 남은 경우 프론트 화면 분기가 없어 크래시 발생
         .filter(c -> c.getType() == ChannelType.PUBLIC
             || readStatusRepository.findAll().stream()
-            .anyMatch(rs -> rs.getChannelId().equals(c.getId())
-                && !rs.getUserId().equals(userId)))
+            .anyMatch(rs -> rs.getChannel().equals(c.getId())
+                && !rs.getUser().equals(userId)))*/
         .map(this::convertToResponse)
         .toList();
   }
@@ -93,11 +93,11 @@ public class BasicChannelService implements ChannelService {
     Channel channel = findChannelEntityById(channelId);
 
     messageRepository.findAll().stream()
-        .filter(m -> channel.getId().equals(m.getChannelId()))
+        .filter(m -> channel.equals(m.getChannel()))
         .forEach(m -> messageRepository.deleteById(m.getId()));
 
     readStatusRepository.findAll().stream()
-        .filter(rs -> rs.getChannelId().equals(channelId))
+        .filter(rs -> channel.equals(rs.getChannel()))
         .forEach(rs -> readStatusRepository.deleteById(rs.getId()));
 
     channelRepository.deleteById(channelId);
@@ -112,7 +112,8 @@ public class BasicChannelService implements ChannelService {
     }
 
     if (readStatusRepository != null) {
-      readStatusRepository.save(new ReadStatus(userId, channelId, Instant.now()));
+      User user = findUserFromExistingReadStatus(userId);
+      readStatusRepository.save(new ReadStatus(user, channel, Instant.now()));
     }
 
     channel.addMember(userId);
@@ -125,7 +126,8 @@ public class BasicChannelService implements ChannelService {
 
     if (readStatusRepository != null) {
       readStatusRepository.findAll().stream()
-          .filter(rs -> rs.getUserId().equals(userId) && rs.getChannelId().equals(channelId))
+          .filter(rs -> rs.getUser().getId().equals(userId) && rs.getChannel().getId()
+              .equals(channelId))
           .findFirst()
           .ifPresent(rs -> readStatusRepository.deleteById(rs.getId()));
     }
@@ -133,11 +135,19 @@ public class BasicChannelService implements ChannelService {
     channelRepository.save(channel);
   }
 
+  // [헬퍼 메서드]: 유저 객체 발굴용 (가볍게 필터링된 메서드 활용)
+  private User findUserFromExistingReadStatus(UUID userId) {
+    return readStatusRepository.findAllByUserId(userId).stream()
+        .findFirst()
+        .map(ReadStatus::getUser)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  }
 
   // [헬퍼 메서드]: 특정 유저의 채널 가입 여부를 확인
   private boolean isMember(UUID userId, UUID channelId) {
     return readStatusRepository.findAll().stream()
-        .anyMatch(rs -> rs.getUserId().equals(userId) && rs.getChannelId().equals(channelId));
+        .anyMatch(
+            rs -> rs.getUser().getId().equals(userId) && rs.getChannel().getId().equals(channelId));
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
@@ -156,8 +166,8 @@ public class BasicChannelService implements ChannelService {
     List<UUID> participantIds = List.of();
     if (channel.getType() == ChannelType.PRIVATE) {
       participantIds = readStatusRepository.findAll().stream()
-          .filter(rs -> rs.getChannelId().equals(channel.getId()))
-          .map(ReadStatus::getUserId)
+          .filter(rs -> rs.getChannel().getId().equals(channel.getId()))
+          .map(rs -> rs.getUser().getId())
           .toList();
     }
 

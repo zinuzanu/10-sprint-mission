@@ -35,18 +35,19 @@ public class BasicUserService implements UserService {
     validateDuplicateEmail(request.email());
     validateDuplicateUserName(request.username());
 
-    UUID profileImageId = processImage(null, profile);
+    BinaryContent profileImage = processImage(null, profile);
 
     User newUser = new User(
         request.username(),
         request.email(),
         request.password(),
-        profileImageId
+        profileImage,
+        null
     );
     userRepository.save(newUser);
 
     if (userStatusRepository != null) {
-      UserStatus status = new UserStatus(newUser.getId(), Instant.now());
+      UserStatus status = new UserStatus(newUser, Instant.now());
       userStatusRepository.save(status);
     }
 
@@ -85,13 +86,13 @@ public class BasicUserService implements UserService {
       validateDuplicateEmail(request.newEmail());
     }
 
-    UUID newProfileId = processImage(user.getProfileId(), profile);
+    BinaryContent newProfile = processImage(user.getProfile(), profile);
 
     user.update(
         request.newUsername(),
         request.newEmail(),
         request.newPassword(),
-        newProfileId
+        newProfile
     );
 
     userRepository.save(user);
@@ -105,7 +106,7 @@ public class BasicUserService implements UserService {
 
     // 1. 유저가 작성한 메시지 삭제
     messageRepository.findAll().stream()
-        .filter(m -> userId.equals(m.getAuthorId()))
+        .filter(m -> user.equals(m.getAuthor()))
         .forEach(m -> messageRepository.deleteById(m.getId()));
 
     // 2. 채널에서 유저 제거
@@ -118,18 +119,18 @@ public class BasicUserService implements UserService {
 
     // 2-1. 유저의 채널 참여 정보(ReadStatus) 삭제
     readStatusRepository.findAll().stream()
-        .filter(rs -> userId.equals(rs.getUserId()))
+        .filter(rs -> user.equals(rs.getUser()))
         .forEach(rs -> readStatusRepository.deleteById(rs.getId()));
 
     // 3. 바이너리 파일 삭제 (프로필 이미지)
-    if (user.getProfileId() != null && binaryContentRepository != null) {
-      binaryContentRepository.deleteById(user.getProfileId());
+    if (user.getProfile() != null && binaryContentRepository != null) {
+      binaryContentRepository.deleteById(user.getProfile().getId());
     }
 
     // 4. 유저 상태 정보 삭제
     if (userStatusRepository != null) {
       userStatusRepository.findAll().stream()
-          .filter(us -> userId.equals(us.getUserId()))
+          .filter(us -> user.equals(us.getUser()))
           .findFirst()
           .ifPresent(us ->
               userStatusRepository.deleteById(us.getId()));
@@ -164,7 +165,7 @@ public class BasicUserService implements UserService {
     boolean online = false;
     if (userStatusRepository != null) {
       online = userStatusRepository.findById(user.getId())
-          .map(status -> status.isOnline())
+          .map(UserStatus::isOnline)
           .orElse(false);
     }
     return new UserDto.Response(
@@ -173,34 +174,31 @@ public class BasicUserService implements UserService {
         user.getUpdatedAt(),
         user.getUsername(),
         user.getEmail(),
-        user.getProfileId(),
+        user.getProfile() != null ? user.getProfile().getId() : null,
         online
     );
   }
 
   // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(update)
-  private UUID processImage(UUID existingId, MultipartFile file) {
+  private BinaryContent processImage(BinaryContent existingProfile, MultipartFile file) {
     if (file == null || binaryContentRepository == null) {
-      return existingId;
+      return existingProfile;
     }
 
     // 기존 이미지가 있으면 삭제 (Update)
-    if (existingId != null) {
-      binaryContentRepository.deleteById(existingId);
+    if (existingProfile != null) {
+      binaryContentRepository.deleteById(existingProfile.getId());
     }
 
     try {
       // 새 이미지 저장
       BinaryContent newImage = new BinaryContent(
-          UUID.randomUUID(),
-          Instant.now(),
           file.getOriginalFilename(),
           file.getSize(),
           file.getContentType(),
           file.getBytes()
       );
-      binaryContentRepository.save(newImage);
-      return newImage.getId();
+      return binaryContentRepository.save(newImage);
     } catch (IOException e) {
       throw new BusinessException(ErrorCode.FILE_SAVE_ERROR);
     }

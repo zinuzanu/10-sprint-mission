@@ -1,32 +1,31 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import lombok.Getter;
 
-import java.util.UUID;
-
 @Getter
-public class User extends BaseEntity {
+public class User extends BaseUpdatableEntity {
 
-  private static final long serialVersionUID = 1L;
-
-  // 베이스 코드를 참고하여, 필드 이름 변경(접두어 제거)
-  // userNickname -> newUsername, userEmail -> email
   private String username;
   private String email;
-  private String password; // 추가
-  private UUID profileId; // 추가 - BinaryContent 참조용
+  private String password;
+  private BinaryContent profile;
+  private UserStatus status;
 
-  public User(String username, String email, String password, UUID profileId) {
+  public User(String username, String email, String password, BinaryContent profile,
+      UserStatus status) {
     validateUser(username, email, password);
     this.username = username;
     this.email = email;
     this.password = password;
-    this.profileId = profileId;
+    this.profile = profile;
+    this.status = status;
   }
 
-  public void update(String newUsername, String newEmail, String newPassword, UUID newProfileId) {
+  public void update(String newUsername, String newEmail, String newPassword,
+      BinaryContent newProfileId) {
     boolean anyValueUpdated = false;
 
     if (newUsername != null && !newUsername.equals(this.username)) {
@@ -47,8 +46,8 @@ public class User extends BaseEntity {
       anyValueUpdated = true;
     }
 
-    if (newProfileId != null && !newProfileId.equals(this.profileId)) {
-      this.profileId = newProfileId;
+    if (newProfileId != null && !newProfileId.equals(this.profile)) {
+      this.profile = newProfileId;
       anyValueUpdated = true;
     }
 

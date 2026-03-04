@@ -21,8 +21,6 @@ public class BasicBinaryContentService implements BinaryContentService {
   @Override
   public BinaryContentDto.Response create(BinaryContentDto.CreateRequest request) {
     BinaryContent binaryContent = new BinaryContent(
-        UUID.randomUUID(),
-        request.createdAt(),
         request.fileName(),
         request.size(),
         request.contentType(),

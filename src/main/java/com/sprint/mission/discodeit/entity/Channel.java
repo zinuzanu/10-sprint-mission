@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import lombok.Getter;
@@ -9,13 +10,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
-public class Channel extends BaseEntity {
+public class Channel extends BaseUpdatableEntity {
 
-  private static final long serialVersionUID = 1L;
-  // 베이스 코드를 참고하여, 필드 이름 변경: channelName -> newName
+  private ChannelType type;
   private String name;
   private String description;
-  private ChannelType type;
 
   private final List<UUID> memberIds = new ArrayList<>();
 
@@ -75,8 +74,7 @@ public class Channel extends BaseEntity {
   // 채널 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
   private void validateChannel(String channelName) {
     // null, Blank 체크
-    if (channelName == null || channelName.isEmpty() ||
-        channelName.length() < 2 || channelName.length() > 15) {
+    if (channelName == null || channelName.length() < 2 || channelName.length() > 15) {
       throw new BusinessException(ErrorCode.INVALID_CHANNEL_NAME);
     }
   }
