@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.Channel;
@@ -43,3 +44,4 @@ public class JCFChannelRepository implements ChannelRepository {
         storage.remove(id);
     }
 }
+*/

@@ -8,13 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AccessLevel;
 import lombok.Getter;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -32,9 +27,6 @@ public class Channel extends BaseUpdatableEntity {
 
   @Column(name = "description", length = 500)
   private String description;
-
-  @Transient
-  private final List<UUID> memberIds = new ArrayList<>();
 
   public Channel(String name, String description, ChannelType type) {
     super();
@@ -59,30 +51,6 @@ public class Channel extends BaseUpdatableEntity {
     }
   }
 
-  // 채널 참여
-  public void addMember(UUID userId) {
-    if (userId == null) {
-      throw new BusinessException(ErrorCode.REQUIRED_PARAMETER_MISSING);
-    }
-    if (memberIds.contains(userId)) {
-      throw new BusinessException(ErrorCode.ALREADY_IN_CHANNEL);
-    }
-
-    memberIds.add(userId);
-  }
-
-  // 채널 퇴장
-  public void removeMember(UUID userId) {
-    if (userId == null) {
-      throw new BusinessException(ErrorCode.REQUIRED_PARAMETER_MISSING);
-    }
-    if (!memberIds.contains(userId)) {
-      throw new BusinessException(ErrorCode.NOT_A_MEMBER);
-    }
-
-    memberIds.remove(userId);
-  }
-
   // 채널 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
   private void validateChannel(String channelName) {
     // null, Blank 체크
@@ -94,9 +62,5 @@ public class Channel extends BaseUpdatableEntity {
   @Override
   public String toString() {
     return String.format("Channel[이름: %s, Channel ID: %s]", name, getId());
-  }
-
-  public List<UUID> getMemberIds() {
-    return new ArrayList<>(memberIds);
   }
 }

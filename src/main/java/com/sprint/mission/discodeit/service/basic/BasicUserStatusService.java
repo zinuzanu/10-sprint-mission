@@ -9,30 +9,31 @@ import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicUserStatusService implements UserStatusService {
 
   private final UserRepository userRepository;
   private final UserStatusRepository userStatusRepository;
 
+  @Transactional
   @Override
   public UserStatusDto.Response create(UserStatusDto.CreateRequest request) {
+    if (userStatusRepository.existsByUserId(request.userID())) {
+      throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
+    }
+
     User user = userRepository.findById(request.userID())
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-    boolean exists = userStatusRepository.findAll().stream()
-        .anyMatch(us -> us.getUser().getId().equals(request.userID()));
-    if (exists) {
-      throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
-    }
     UserStatus userStatus = new UserStatus(user);
     return convertToResponse(userStatusRepository.save(userStatus));
   }
@@ -49,36 +50,41 @@ public class BasicUserStatusService implements UserStatusService {
         .toList();
   }
 
+  @Transactional
   @Override
   public UserStatusDto.Response update(UUID userId, UpdateRequest request) {
     return updateByUserId(userId, request.newLastActiveAt());
   }
 
+  @Transactional
   @Override
   public UserStatusDto.Response updateByUserId(UUID userId, Instant lastOnlineAt) {
-    UserStatus userStatus = userStatusRepository.findAll().stream()
-        .filter(us -> us.getUser().getId().equals(userId))
-        .findFirst()
-        .orElseGet(() -> {
-          User user = userRepository.findById(userId)
-              .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-          return userStatusRepository.save(new UserStatus(user));
-        });
-
+    UserStatus userStatus = getOrCreateUserStatus(userId);
     userStatus.updateActiveTime();
-    return convertToResponse(userStatusRepository.save(userStatus));
+    return convertToResponse(userStatus);
   }
 
+  @Transactional
   @Override
   public void delete(UUID id) {
-    findUserStatusEntityById(id);
-    userStatusRepository.deleteById(id);
+    UserStatus userStatus = findUserStatusEntityById(id);
+    userStatusRepository.delete(userStatus);
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
   private UserStatus findUserStatusEntityById(UUID id) {
     return userStatusRepository.findById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+  }
+
+  // [헬퍼 메서드]: 유저 상태의 존재 여부에 따른 조회/생성 로직
+  private UserStatus getOrCreateUserStatus(UUID userId) {
+    return userStatusRepository.findByUserId(userId)
+        .orElseGet(() -> {
+          User user = userRepository.findById(userId)
+              .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+          return userStatusRepository.save(new UserStatus(user));
+        });
   }
 
   private UserStatusDto.Response convertToResponse(UserStatus userStatus) {

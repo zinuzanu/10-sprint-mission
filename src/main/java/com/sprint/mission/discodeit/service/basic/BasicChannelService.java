@@ -17,15 +17,18 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicChannelService implements ChannelService {
 
   private final ChannelRepository channelRepository;
   private final MessageRepository messageRepository;
   private final ReadStatusRepository readStatusRepository;
 
+  @Transactional
   @Override
   public ChannelDto.Response createPublicChannel(ChannelDto.CreatePublicRequest request) {
     Channel newChannel = new Channel(
@@ -36,6 +39,7 @@ public class BasicChannelService implements ChannelService {
     return convertToResponse(channelRepository.save(newChannel));
   }
 
+  @Transactional
   @Override
   public ChannelDto.Response createPrivateChannel(ChannelDto.CreatePrivateRequest request) {
     Channel newChannel = new Channel(
@@ -54,25 +58,18 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   public ChannelDto.Response findById(UUID id) {
-    Channel channel = findChannelEntityById(id);
-    return convertToResponse(channel);
+    return convertToResponse(findChannelEntityById(id));
   }
 
   @Override
   public List<ChannelDto.Response> findAllByUserId(UUID userId) {
     return channelRepository.findAll().stream()
         .filter(c -> c.getType() == ChannelType.PUBLIC || isMember(userId, c.getId()))
-/*        // TODO: 어래 임시 필터 로직은 추루 리포지토리/도메인 레이어로 이관 검토
-        // [임시 조치] PRIVATE 채널에서 나를 제외한 참여자가 없는 경우 숨김
-        // [이유] PRIVATE 채널에 유저가 1명만 남은 경우 프론트 화면 분기가 없어 크래시 발생
-        .filter(c -> c.getType() == ChannelType.PUBLIC
-            || readStatusRepository.findAll().stream()
-            .anyMatch(rs -> rs.getChannel().equals(c.getId())
-                && !rs.getUser().equals(userId)))*/
         .map(this::convertToResponse)
         .toList();
   }
 
+  @Transactional
   @Override
   public ChannelDto.Response update(UUID channelId, ChannelDto.UpdateRequest request) {
     Channel channel = findChannelEntityById(channelId);
@@ -85,54 +82,18 @@ public class BasicChannelService implements ChannelService {
         request.newName(),
         request.newDescription()
     );
-    return convertToResponse(channelRepository.save(channel));
+    return convertToResponse(channel);
   }
 
+  @Transactional
   @Override
   public void delete(UUID channelId) {
     Channel channel = findChannelEntityById(channelId);
 
-    messageRepository.findAll().stream()
-        .filter(m -> channel.equals(m.getChannel()))
-        .forEach(m -> messageRepository.deleteById(m.getId()));
+    messageRepository.deleteByChannel(channel);
+    readStatusRepository.deleteByChannel(channel);
 
-    readStatusRepository.findAll().stream()
-        .filter(rs -> channel.equals(rs.getChannel()))
-        .forEach(rs -> readStatusRepository.deleteById(rs.getId()));
-
-    channelRepository.deleteById(channelId);
-  }
-
-  @Override
-  public void addChannelByUserId(UUID channelId, UUID userId) {
-    Channel channel = findChannelEntityById(channelId);
-
-    if (isMember(userId, channelId)) {
-      throw new BusinessException(ErrorCode.ALREADY_IN_CHANNEL);
-    }
-
-    if (readStatusRepository != null) {
-      User user = findUserFromExistingReadStatus(userId);
-      readStatusRepository.save(new ReadStatus(user, channel));
-    }
-
-    channel.addMember(userId);
-    channelRepository.save(channel);
-  }
-
-  @Override
-  public void removeChannelByUserId(UUID channelId, UUID userId) {
-    Channel channel = findChannelEntityById(channelId);
-
-    if (readStatusRepository != null) {
-      readStatusRepository.findAll().stream()
-          .filter(rs -> rs.getUser().getId().equals(userId) && rs.getChannel().getId()
-              .equals(channelId))
-          .findFirst()
-          .ifPresent(rs -> readStatusRepository.deleteById(rs.getId()));
-    }
-    channel.removeMember(userId);
-    channelRepository.save(channel);
+    channelRepository.delete(channel);
   }
 
   // [헬퍼 메서드]: 유저 객체 발굴용 (가볍게 필터링된 메서드 활용)

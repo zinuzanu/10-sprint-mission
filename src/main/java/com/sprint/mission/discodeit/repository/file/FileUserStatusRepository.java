@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -96,3 +97,4 @@ public class FileUserStatusRepository implements UserStatusRepository {
   }
 }
 
+*/

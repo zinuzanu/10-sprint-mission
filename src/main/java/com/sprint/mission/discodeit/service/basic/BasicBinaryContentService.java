@@ -11,13 +11,16 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
 
+  @Transactional
   @Override
   public BinaryContentDto.Response create(BinaryContentDto.CreateRequest request) {
     BinaryContent binaryContent = new BinaryContent(
@@ -41,16 +44,16 @@ public class BasicBinaryContentService implements BinaryContentService {
 
   @Override
   public List<BinaryContentDto.Response> findAllIdIn(List<UUID> ids) {
-    return binaryContentRepository.findAll().stream()
-        .filter(content -> ids.contains(content.getId()))
+    return binaryContentRepository.findAllById(ids).stream()
         .map(this::convertToResponse)
         .toList();
   }
 
+  @Transactional
   @Override
   public void delete(UUID id) {
-    findBinaryContentById(id);
-    binaryContentRepository.deleteById(id);
+    BinaryContent content = findBinaryContentById(id);
+    binaryContentRepository.delete(content);
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화

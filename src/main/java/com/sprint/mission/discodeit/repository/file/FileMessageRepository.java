@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.repository.file;
 
 import com.sprint.mission.discodeit.entity.Message;
@@ -110,3 +111,4 @@ public class FileMessageRepository implements MessageRepository {
         .max(Instant::compareTo);
   }
 }
+*/

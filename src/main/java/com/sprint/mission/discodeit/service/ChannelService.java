@@ -18,8 +18,4 @@ public interface ChannelService {
   ChannelDto.Response update(UUID channelId, ChannelDto.UpdateRequest request);
 
   void delete(UUID id);
-
-  void addChannelByUserId(UUID channelId, UUID userId);
-
-  void removeChannelByUserId(UUID channelId, UUID userId);
 }

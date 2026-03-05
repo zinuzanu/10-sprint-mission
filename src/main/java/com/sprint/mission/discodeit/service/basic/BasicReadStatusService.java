@@ -15,28 +15,28 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicReadStatusService implements ReadStatusService {
 
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final ReadStatusRepository readStatusRepository;
 
+  @Transactional
   @Override
   public ReadStatusDto.Response create(ReadStatusDto.CreateRequest request) {
+    if (readStatusRepository.existsByChannelIdAndUserId(request.channelId(), request.userId())) {
+      throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
+    }
+
     User user = userRepository.findById(request.userId())
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     Channel channel = channelRepository.findById(request.channelId())
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
-
-    boolean isDuplicate = readStatusRepository.findAll().stream()
-        .anyMatch(rs -> rs.getUser().getId().equals(request.userId())
-            && rs.getChannel().getId().equals(request.channelId()));
-    if (isDuplicate) {
-      throw new BusinessException(ErrorCode.READ_STATUS_ALREADY_EXISTS);
-    }
 
     ReadStatus readStatus = new ReadStatus(
         user,
@@ -53,23 +53,24 @@ public class BasicReadStatusService implements ReadStatusService {
 
   @Override
   public List<ReadStatusDto.Response> findAllByUserId(UUID userId) {
-    return readStatusRepository.findAll().stream()
-        .filter(rs -> rs.getUser().getId().equals(userId))
+    return readStatusRepository.findAllByUserId(userId).stream()
         .map(this::convertToResponse)
         .toList();
   }
 
+  @Transactional
   @Override
   public ReadStatusDto.Response update(UUID readStatusId, UpdateRequest request) {
     ReadStatus readStatus = findReadStatusEntityById(readStatusId);
     readStatus.updateLastReadAt();
-    return convertToResponse(readStatusRepository.save(readStatus));
+    return convertToResponse(readStatus);
   }
 
+  @Transactional
   @Override
   public void delete(UUID id) {
-    findReadStatusEntityById(id);
-    readStatusRepository.deleteById(id);
+    ReadStatus readStatus = findReadStatusEntityById(id);
+    readStatusRepository.delete(readStatus);
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화

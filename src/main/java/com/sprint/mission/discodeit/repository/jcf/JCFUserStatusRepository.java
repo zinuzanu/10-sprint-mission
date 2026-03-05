@@ -1,3 +1,4 @@
+/*
 package com.sprint.mission.discodeit.repository.jcf;
 
 import com.sprint.mission.discodeit.entity.UserStatus;
@@ -38,3 +39,4 @@ public class JCFUserStatusRepository implements UserStatusRepository {
         storage.remove(id);
     }
 }
+*/

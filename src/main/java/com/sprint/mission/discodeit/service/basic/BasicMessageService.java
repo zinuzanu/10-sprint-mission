@@ -19,10 +19,12 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicMessageService implements MessageService {
 
   private final MessageRepository messageRepository;
@@ -30,6 +32,7 @@ public class BasicMessageService implements MessageService {
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
 
+  @Transactional
   @Override
   public MessageDto.Response create(MessageDto.CreateRequest request,
       List<MultipartFile> attachments) {
@@ -38,23 +41,7 @@ public class BasicMessageService implements MessageService {
     Channel channel = channelRepository.findById(request.channelId())
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-    List<BinaryContent> attachmentContents = new ArrayList<>();
-    if (attachments != null && binaryContentRepository != null) {
-      attachments.forEach(file -> {
-        try {
-          BinaryContent content = new BinaryContent(
-              file.getOriginalFilename(),
-              file.getSize(),
-              file.getContentType(),
-              file.getBytes()
-          );
-          binaryContentRepository.save(content);
-          attachmentContents.add(content);
-        } catch (IOException e) {
-          throw new BusinessException(ErrorCode.FILE_SAVE_ERROR);
-        }
-      });
-    }
+    List<BinaryContent> attachmentContents = processAttachments(attachments);
 
     Message message = new Message(
         author,
@@ -67,35 +54,57 @@ public class BasicMessageService implements MessageService {
 
   @Override
   public MessageDto.Response findById(UUID id) {
-    Message message = findMessageEntityById(id);
-    return convertToResponse(message);
+    return convertToResponse(findMessageEntityById(id));
   }
 
   @Override
   public List<MessageDto.Response> findAllByChannelId(UUID channelId) {
-    return messageRepository.findAll().stream()
-        .filter(m -> m.getChannel().getId().equals(channelId))
+    Channel channel = channelRepository.findById(channelId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+
+    return messageRepository.findByChannel(channel).stream()
         .map(this::convertToResponse)
         .toList();
   }
 
+  @Transactional
   @Override
   public MessageDto.Response update(UUID messageId, UpdateRequest request) {
     Message message = findMessageEntityById(messageId);
 
     message.update(request.newContent());
-    return convertToResponse(messageRepository.save(message));
+    return convertToResponse(message);
   }
 
+  @Transactional
   @Override
   public void delete(UUID messageId) {
     Message message = findMessageEntityById(messageId);
 
-    if (binaryContentRepository != null && message.getAttachments() != null) {
-      message.getAttachments().forEach(content ->
-          binaryContentRepository.deleteById(content.getId()));
+    messageRepository.delete(message);
+  }
+
+  // [헬퍼 메서드]: 첨부 파일 처리
+  private List<BinaryContent> processAttachments(List<MultipartFile> attachments) {
+    List<BinaryContent> results = new ArrayList<>();
+    if (attachments == null || attachments.isEmpty()) {
+      return results;
     }
-    messageRepository.deleteById(messageId);
+
+    for (MultipartFile file : attachments) {
+      try {
+        BinaryContent content = new BinaryContent(
+            file.getOriginalFilename(),
+            file.getSize(),
+            file.getContentType(),
+            file.getBytes()
+        );
+        results.add(binaryContentRepository.save(content));
+      } catch (IOException e) {
+        throw new BusinessException(ErrorCode.FILE_SAVE_ERROR);
+      }
+    }
+    return results;
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
@@ -106,10 +115,11 @@ public class BasicMessageService implements MessageService {
 
   // [헬퍼 메서드]: 요구사항에 맞는 Response DTO 변환
   private MessageDto.Response convertToResponse(Message message) {
+    UUID authorId = (message.getAuthor() != null) ? message.getAuthor().getId() : null;
     return new MessageDto.Response(
         message.getId(),
         message.getContent(),
-        message.getAuthor().getId(),
+        authorId,
         message.getChannel().getId(),
         message.getCreatedAt(),
         message.getUpdatedAt(),
