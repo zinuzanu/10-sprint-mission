@@ -3,61 +3,73 @@ package com.sprint.mission.discodeit.entity;
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "users")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseUpdatableEntity {
 
+  @Column(name = "username", nullable = false, unique = true, length = 50)
   private String username;
+
+  @Column(name = "email", nullable = false, length = 100)
   private String email;
+
+  @Column(nullable = false, length = 60)
   private String password;
+
+  // TODO: 단방향 관계이므로 고아객체 처리는 추후 binary_contents 고도화 시 적용 예정.
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "profile_id", unique = true)
   private BinaryContent profile;
+
+  @OneToOne(
+      mappedBy = "user",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true
+  )
   private UserStatus status;
 
-  public User(String username, String email, String password, BinaryContent profile,
-      UserStatus status) {
+  public User(String username, String email, String password) {
+    super();
     validateUser(username, email, password);
     this.username = username;
     this.email = email;
     this.password = password;
-    this.profile = profile;
-    this.status = status;
   }
 
   public void update(String newUsername, String newEmail, String newPassword,
       BinaryContent newProfileId) {
-    boolean anyValueUpdated = false;
 
     if (newUsername != null && !newUsername.equals(this.username)) {
       validateUsername(newUsername);
       this.username = newUsername;
-      anyValueUpdated = true;
     }
 
     if (newEmail != null && !newEmail.equals(this.email)) {
       validateEmail(newEmail);
       this.email = newEmail;
-      anyValueUpdated = true;
     }
 
     if (newPassword != null && !newPassword.equals(this.password)) {
       validatePassword(newPassword);
       this.password = newPassword;
-      anyValueUpdated = true;
     }
-
-    if (newProfileId != null && !newProfileId.equals(this.profile)) {
-      this.profile = newProfileId;
-      anyValueUpdated = true;
-    }
-
-    if (anyValueUpdated) {
-      super.update();
-    }
+    this.profile = newProfileId;
   }
 
   // 유저 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
-  // 각 필드 별로 검증 로직 분리
   private void validateUser(String username, String email, String password) {
     validateUsername(username);
     validateEmail(email);
@@ -66,13 +78,13 @@ public class User extends BaseUpdatableEntity {
 
   private void validateUsername(String username) {
     if (username == null || username.isBlank() || username.contains(" ") ||
-        username.length() < 2 || username.length() > 10) {
+        username.length() < 2 || username.length() > 50) {
       throw new BusinessException(ErrorCode.INVALID_USERNAME);
     }
   }
 
   private void validateEmail(String email) {
-    if (email == null || email.isBlank() || email.contains(" ")) {
+    if (email == null || email.isBlank() || email.contains(" ") || email.length() > 100) {
       throw new BusinessException(ErrorCode.INVALID_EMAIL);
     }
   }

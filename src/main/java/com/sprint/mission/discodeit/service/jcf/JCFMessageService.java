@@ -58,7 +58,7 @@
 //    }
 //
 //    @Override
-//    public Message update(UUID id, String newContent) {
+//    public Message updateLastReadAt(UUID id, String newContent) {
 //        Message updateContent = findById(id);
 //        updateContent.updateMessage(newContent);
 //        return updateContent;

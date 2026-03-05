@@ -51,10 +51,10 @@
 //    }
 //
 //    @Override
-//    public Channel update(UUID id, String updateChannelName) {
-//        Channel update = findById(id);
-//        update.update(updateChannelName);
-//        return update;
+//    public Channel updateLastReadAt(UUID id, String updateChannelName) {
+//        Channel updateLastReadAt = findById(id);
+//        updateLastReadAt.updateLastReadAt(updateChannelName);
+//        return updateLastReadAt;
 //    }
 //
 //    public void addChannelByUserId(UUID channelId, UUID authorId) {

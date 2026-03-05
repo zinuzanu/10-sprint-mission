@@ -52,7 +52,7 @@
 //    }
 //
 //    @Override
-//    public User update(UUID id, String userNickname) {
+//    public User updateLastReadAt(UUID id, String userNickname) {
 //        User user = findById(id);
 //        user.updateNickname(userNickname);
 //        return user;

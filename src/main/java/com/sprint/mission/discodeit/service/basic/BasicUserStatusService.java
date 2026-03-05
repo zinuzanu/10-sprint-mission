@@ -33,7 +33,7 @@ public class BasicUserStatusService implements UserStatusService {
     if (exists) {
       throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
     }
-    UserStatus userStatus = new UserStatus(user, request.lastOnlineAt());
+    UserStatus userStatus = new UserStatus(user);
     return convertToResponse(userStatusRepository.save(userStatus));
   }
 
@@ -62,10 +62,10 @@ public class BasicUserStatusService implements UserStatusService {
         .orElseGet(() -> {
           User user = userRepository.findById(userId)
               .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-          return userStatusRepository.save(new UserStatus(user, Instant.MIN));
+          return userStatusRepository.save(new UserStatus(user));
         });
 
-    userStatus.update(lastOnlineAt);
+    userStatus.updateActiveTime();
     return convertToResponse(userStatusRepository.save(userStatus));
   }
 

@@ -40,8 +40,7 @@ public class BasicReadStatusService implements ReadStatusService {
 
     ReadStatus readStatus = new ReadStatus(
         user,
-        channel,
-        request.lastReadAt()
+        channel
     );
 
     return convertToResponse(readStatusRepository.save(readStatus));
@@ -63,7 +62,7 @@ public class BasicReadStatusService implements ReadStatusService {
   @Override
   public ReadStatusDto.Response update(UUID readStatusId, UpdateRequest request) {
     ReadStatus readStatus = findReadStatusEntityById(readStatusId);
-    readStatus.update(request.lastReadAt());
+    readStatus.updateLastReadAt();
     return convertToResponse(readStatusRepository.save(readStatus));
   }
 

@@ -13,7 +13,6 @@ import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,14 +39,12 @@ public class BasicUserService implements UserService {
     User newUser = new User(
         request.username(),
         request.email(),
-        request.password(),
-        profileImage,
-        null
+        request.password()
     );
     userRepository.save(newUser);
 
     if (userStatusRepository != null) {
-      UserStatus status = new UserStatus(newUser, Instant.now());
+      UserStatus status = new UserStatus(newUser);
       userStatusRepository.save(status);
     }
 
@@ -92,8 +89,7 @@ public class BasicUserService implements UserService {
         request.newUsername(),
         request.newEmail(),
         request.newPassword(),
-        newProfile
-    );
+        newProfile);
 
     userRepository.save(user);
     return convertToResponse(user);
@@ -179,7 +175,7 @@ public class BasicUserService implements UserService {
     );
   }
 
-  // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(update)
+  // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(updateLastReadAt)
   private BinaryContent processImage(BinaryContent existingProfile, MultipartFile file) {
     if (file == null || binaryContentRepository == null) {
       return existingProfile;

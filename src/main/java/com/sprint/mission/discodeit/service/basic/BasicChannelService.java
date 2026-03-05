@@ -47,7 +47,7 @@ public class BasicChannelService implements ChannelService {
 
     request.participantIds().forEach(userId -> {
       User user = findUserFromExistingReadStatus(userId);
-      readStatusRepository.save(new ReadStatus(user, saved, Instant.MIN));
+      readStatusRepository.save(new ReadStatus(user, saved));
     });
     return convertToResponse(saved);
   }
@@ -113,7 +113,7 @@ public class BasicChannelService implements ChannelService {
 
     if (readStatusRepository != null) {
       User user = findUserFromExistingReadStatus(userId);
-      readStatusRepository.save(new ReadStatus(user, channel, Instant.now()));
+      readStatusRepository.save(new ReadStatus(user, channel));
     }
 
     channel.addMember(userId);
