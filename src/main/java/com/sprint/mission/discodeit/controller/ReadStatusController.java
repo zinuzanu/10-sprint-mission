@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.dto.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.ReadStatusDto;
+import com.sprint.mission.discodeit.dto.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.service.ReadStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,22 +32,22 @@ public class ReadStatusController {
   @Operation(summary = "특정 채널 메세지 수신 정보 생성", description = "특정 채널에 대한 사용자의 메시지 수신(읽음) 정보를 생성합니다.")
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ReadStatusDto.Response create(@RequestBody ReadStatusDto.CreateRequest request) {
+  public ReadStatusDto create(@RequestBody ReadStatusCreateRequest request) {
     return readStatusService.create(request);
   }
 
   @Operation(summary = "특정 채널 메세지 수신 정보 수정", description = "사용자가 메시지를 어디까지 읽었는지(마지막 읽은 시각)를 수정합니다.")
   @PatchMapping("/{readStatusId}")
-  public ReadStatusDto.Response update(
+  public ReadStatusDto update(
       @Parameter(description = "수정할 수신 정보의 UUID", required = true)
       @PathVariable UUID readStatusId,
-      @RequestBody ReadStatusDto.UpdateRequest request) {
+      @RequestBody ReadStatusUpdateRequest request) {
     return readStatusService.update(readStatusId, request);
   }
 
   @Operation(summary = "특정 사용자 메세지 수신 정보 조회", description = "특정 사용자가 참여 중인 모든 채널의 읽음 상태 정보를 조회합니다.")
   @GetMapping
-  public List<ReadStatusDto.Response> findAllByUserId(
+  public List<ReadStatusDto> findAllByUserId(
       @Parameter(description = "조회 대상 사용자의 UUID", required = true)
       @RequestParam UUID userId) {
     return readStatusService.findAllByUserId(userId);

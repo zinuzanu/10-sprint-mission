@@ -1,22 +1,24 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.ChannelCreatePrivateRequest;
+import com.sprint.mission.discodeit.dto.ChannelCreatePublicRequest;
 import com.sprint.mission.discodeit.dto.ChannelDto;
+import com.sprint.mission.discodeit.dto.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -27,51 +29,44 @@ public class BasicChannelService implements ChannelService {
   private final ChannelRepository channelRepository;
   private final MessageRepository messageRepository;
   private final ReadStatusRepository readStatusRepository;
+  private final ChannelMapper channelMapper;
 
   @Transactional
   @Override
-  public ChannelDto.Response createPublicChannel(ChannelDto.CreatePublicRequest request) {
-    Channel newChannel = new Channel(
-        request.name(),
-        request.description(),
-        ChannelType.PUBLIC
-    );
-    return convertToResponse(channelRepository.save(newChannel));
+  public ChannelDto createPublicChannel(ChannelCreatePublicRequest request) {
+    Channel newChannel = channelMapper.toEntity(request);
+    return channelMapper.toDto(channelRepository.save(newChannel));
   }
 
   @Transactional
   @Override
-  public ChannelDto.Response createPrivateChannel(ChannelDto.CreatePrivateRequest request) {
-    Channel newChannel = new Channel(
-        null,
-        null,
-        ChannelType.PRIVATE
-    );
+  public ChannelDto createPrivateChannel(ChannelCreatePrivateRequest request) {
+    Channel newChannel = new Channel(null, null, ChannelType.PRIVATE);
     Channel saved = channelRepository.save(newChannel);
 
-    request.participantIds().forEach(userId -> {
+    request.getParticipantIds().forEach(userId -> {
       User user = findUserFromExistingReadStatus(userId);
       readStatusRepository.save(new ReadStatus(user, saved));
     });
-    return convertToResponse(saved);
+    return channelMapper.toDto(saved);
   }
 
   @Override
-  public ChannelDto.Response findById(UUID id) {
-    return convertToResponse(findChannelEntityById(id));
+  public ChannelDto findById(UUID id) {
+    return channelMapper.toDto(findChannelEntityById(id));
   }
 
   @Override
-  public List<ChannelDto.Response> findAllByUserId(UUID userId) {
+  public List<ChannelDto> findAllByUserId(UUID userId) {
     return channelRepository.findAll().stream()
         .filter(c -> c.getType() == ChannelType.PUBLIC || isMember(userId, c.getId()))
-        .map(this::convertToResponse)
+        .map(channelMapper::toDto)
         .toList();
   }
 
   @Transactional
   @Override
-  public ChannelDto.Response update(UUID channelId, ChannelDto.UpdateRequest request) {
+  public ChannelDto update(UUID channelId, ChannelUpdateRequest request) {
     Channel channel = findChannelEntityById(channelId);
 
     if (channel.getType() == ChannelType.PRIVATE) {
@@ -79,10 +74,10 @@ public class BasicChannelService implements ChannelService {
     }
 
     channel.update(
-        request.newName(),
-        request.newDescription()
+        request.getNewName(),
+        request.getNewDescription()
     );
-    return convertToResponse(channel);
+    return channelMapper.toDto(channel);
   }
 
   @Transactional
@@ -115,30 +110,5 @@ public class BasicChannelService implements ChannelService {
   private Channel findChannelEntityById(UUID id) {
     return channelRepository.findById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
-  }
-
-  // [헬퍼 메서드]: 엔티티를 Response DTO로 변환 (가장 최신 메시지 시간 포함)
-  private ChannelDto.Response convertToResponse(Channel channel) {
-    // [추가] 요구사항: 해당 채널의 가장 최근 메시지 시간 정보 포함
-    Instant lastMessageAt = messageRepository.findLatestMessageTimeByChannelId(channel.getId())
-        .orElse(null);
-
-    // [추가] 요구사항: PRIVATE인 경우 참여한 User ID 정보 포함
-    List<UUID> participantIds = List.of();
-    if (channel.getType() == ChannelType.PRIVATE) {
-      participantIds = readStatusRepository.findAll().stream()
-          .filter(rs -> rs.getChannel().getId().equals(channel.getId()))
-          .map(rs -> rs.getUser().getId())
-          .toList();
-    }
-
-    return new ChannelDto.Response(
-        channel.getId(),
-        channel.getName(),
-        channel.getDescription(),
-        channel.getType(),
-        lastMessageAt,
-        participantIds
-    );
   }
 }

@@ -1,16 +1,17 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.BinaryContentCreateRequest;
 import com.sprint.mission.discodeit.dto.BinaryContentDto;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.BinaryContentMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.service.BinaryContentService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -19,22 +20,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class BasicBinaryContentService implements BinaryContentService {
 
   private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentMapper binaryContentMapper;
 
   @Transactional
   @Override
-  public BinaryContentDto.Response create(BinaryContentDto.CreateRequest request) {
-    BinaryContent binaryContent = new BinaryContent(
-        request.fileName(),
-        request.size(),
-        request.contentType(),
-        request.bytes()
-    );
-    return convertToResponse(binaryContentRepository.save(binaryContent));
+  public BinaryContentDto create(BinaryContentCreateRequest request) {
+    BinaryContent binaryContent = binaryContentMapper.toEntity(request);
+    return binaryContentMapper.toDto(binaryContentRepository.save(binaryContent));
   }
 
   @Override
-  public BinaryContentDto.Response findById(UUID id) {
-    return convertToResponse(findBinaryContentById(id));
+  public BinaryContentDto findById(UUID id) {
+    return binaryContentMapper.toDto(findBinaryContentById(id));
   }
 
   @Override
@@ -43,9 +40,9 @@ public class BasicBinaryContentService implements BinaryContentService {
   }
 
   @Override
-  public List<BinaryContentDto.Response> findAllIdIn(List<UUID> ids) {
+  public List<BinaryContentDto> findAllIdIn(List<UUID> ids) {
     return binaryContentRepository.findAllById(ids).stream()
-        .map(this::convertToResponse)
+        .map(binaryContentMapper::toDto)
         .toList();
   }
 
@@ -60,16 +57,5 @@ public class BasicBinaryContentService implements BinaryContentService {
   private BinaryContent findBinaryContentById(UUID id) {
     return binaryContentRepository.findById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.BINARY_CONTENT_NOT_FOUND));
-  }
-
-  private BinaryContentDto.Response convertToResponse(BinaryContent binaryContent) {
-    return new BinaryContentDto.Response(
-        binaryContent.getId(),
-        binaryContent.getCreatedAt(),
-        binaryContent.getFileName(),
-        binaryContent.getSize(),
-        binaryContent.getContentType(),
-        binaryContent.getBytes()
-    );
   }
 }

@@ -1,11 +1,13 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.UserStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.UserStatusDto;
-import com.sprint.mission.discodeit.dto.UserStatusDto.UpdateRequest;
+import com.sprint.mission.discodeit.dto.UserStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
@@ -23,45 +25,46 @@ public class BasicUserStatusService implements UserStatusService {
 
   private final UserRepository userRepository;
   private final UserStatusRepository userStatusRepository;
+  private final UserStatusMapper userStatusMapper;
 
   @Transactional
   @Override
-  public UserStatusDto.Response create(UserStatusDto.CreateRequest request) {
-    if (userStatusRepository.existsByUserId(request.userID())) {
+  public UserStatusDto create(UserStatusCreateRequest request) {
+    if (userStatusRepository.existsByUserId(request.getUserId())) {
       throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
     }
 
-    User user = userRepository.findById(request.userID())
+    User user = userRepository.findById(request.getUserId())
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
     UserStatus userStatus = new UserStatus(user);
-    return convertToResponse(userStatusRepository.save(userStatus));
+    return userStatusMapper.toDto(userStatusRepository.save(userStatus));
   }
 
   @Override
-  public UserStatusDto.Response findById(UUID id) {
-    return convertToResponse(findUserStatusEntityById(id));
+  public UserStatusDto findById(UUID id) {
+    return userStatusMapper.toDto(findUserStatusEntityById(id));
   }
 
   @Override
-  public List<UserStatusDto.Response> findAll() {
+  public List<UserStatusDto> findAll() {
     return userStatusRepository.findAll().stream()
-        .map(this::convertToResponse)
+        .map(userStatusMapper::toDto)
         .toList();
   }
 
   @Transactional
   @Override
-  public UserStatusDto.Response update(UUID userId, UpdateRequest request) {
-    return updateByUserId(userId, request.newLastActiveAt());
+  public UserStatusDto update(UUID userId, UserStatusUpdateRequest request) {
+    return updateByUserId(userId, request.getNewLastActiveAt());
   }
 
   @Transactional
   @Override
-  public UserStatusDto.Response updateByUserId(UUID userId, Instant lastOnlineAt) {
+  public UserStatusDto updateByUserId(UUID userId, Instant lastOnlineAt) {
     UserStatus userStatus = getOrCreateUserStatus(userId);
     userStatus.updateActiveTime();
-    return convertToResponse(userStatus);
+    return userStatusMapper.toDto(userStatusRepository.save(userStatus));
   }
 
   @Transactional
@@ -85,14 +88,5 @@ public class BasicUserStatusService implements UserStatusService {
               .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
           return userStatusRepository.save(new UserStatus(user));
         });
-  }
-
-  private UserStatusDto.Response convertToResponse(UserStatus userStatus) {
-    return new UserStatusDto.Response(
-        userStatus.getId(),
-        userStatus.getUser().getId(),
-        userStatus.getLastActiveAt(),
-        userStatus.isOnline()
-    );
   }
 }

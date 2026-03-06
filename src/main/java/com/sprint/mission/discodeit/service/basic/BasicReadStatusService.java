@@ -1,12 +1,14 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.ReadStatusDto;
-import com.sprint.mission.discodeit.dto.ReadStatusDto.UpdateRequest;
+import com.sprint.mission.discodeit.dto.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
@@ -25,45 +27,46 @@ public class BasicReadStatusService implements ReadStatusService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final ReadStatusRepository readStatusRepository;
+  private final ReadStatusMapper readStatusMapper;
 
   @Transactional
   @Override
-  public ReadStatusDto.Response create(ReadStatusDto.CreateRequest request) {
-    if (readStatusRepository.existsByChannelIdAndUserId(request.channelId(), request.userId())) {
+  public ReadStatusDto create(ReadStatusCreateRequest request) {
+    if (readStatusRepository.existsByChannelIdAndUserId(request.getChannelId(),
+        request.getUserId())) {
       throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
     }
 
-    User user = userRepository.findById(request.userId())
+    User user = userRepository.findById(request.getUserId())
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    Channel channel = channelRepository.findById(request.channelId())
+    Channel channel = channelRepository.findById(request.getChannelId())
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-    ReadStatus readStatus = new ReadStatus(
-        user,
-        channel
-    );
+    ReadStatus readStatus = readStatusMapper.toEntity(request);
 
-    return convertToResponse(readStatusRepository.save(readStatus));
+    readStatus.assignUserAndChannel(user, channel);
+
+    return readStatusMapper.toDto(readStatusRepository.save(readStatus));
   }
 
   @Override
-  public ReadStatusDto.Response findById(UUID id) {
-    return convertToResponse(findReadStatusEntityById(id));
+  public ReadStatusDto findById(UUID id) {
+    return readStatusMapper.toDto(findReadStatusEntityById(id));
   }
 
   @Override
-  public List<ReadStatusDto.Response> findAllByUserId(UUID userId) {
+  public List<ReadStatusDto> findAllByUserId(UUID userId) {
     return readStatusRepository.findAllByUserId(userId).stream()
-        .map(this::convertToResponse)
+        .map(readStatusMapper::toDto)
         .toList();
   }
 
   @Transactional
   @Override
-  public ReadStatusDto.Response update(UUID readStatusId, UpdateRequest request) {
+  public ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest request) {
     ReadStatus readStatus = findReadStatusEntityById(readStatusId);
     readStatus.updateLastReadAt();
-    return convertToResponse(readStatus);
+    return readStatusMapper.toDto(readStatus);
   }
 
   @Transactional
@@ -77,15 +80,5 @@ public class BasicReadStatusService implements ReadStatusService {
   private ReadStatus findReadStatusEntityById(UUID id) {
     return readStatusRepository.findById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
-  }
-
-  // [헬퍼 메서드]: 엔티티를 클라이언트 응답용 DTO로 변환 및 데이터 가공
-  private ReadStatusDto.Response convertToResponse(ReadStatus readStatus) {
-    return new ReadStatusDto.Response(
-        readStatus.getId(),
-        readStatus.getUser().getId(),
-        readStatus.getChannel().getId(),
-        readStatus.getLastReadAt()
-    );
   }
 }

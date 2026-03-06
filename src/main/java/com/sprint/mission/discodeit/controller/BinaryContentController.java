@@ -24,7 +24,7 @@ public class BinaryContentController {
 
   @Operation(summary = "단일 파일 정보 조회", description = "ID를 통해 특정 파일의 상세 정보와 바이너리 데이터를 조회합니다.")
   @GetMapping("/{binaryContentId}")
-  public BinaryContentDto.Response find(
+  public BinaryContentDto find(
       @Parameter(description = "조회할 파일의 UUID", required = true)
       @PathVariable UUID binaryContentId) {
     return binaryContentService.findById(binaryContentId);
@@ -32,7 +32,7 @@ public class BinaryContentController {
 
   @Operation(summary = "파일 목록 다중 조회", description = "여러 개의 ID를 파라미터로 받아 해당하는 파일 정보들을 한꺼번에 조회합니다.")
   @GetMapping
-  public List<BinaryContentDto.Response> findAllByIdIn(
+  public List<BinaryContentDto> findAllByIdIn(
       @Parameter(description = "조회할 파일 UUID 리스트", required = true)
       @RequestParam List<UUID> binaryContentIds) {
     return binaryContentService.findAllIdIn(binaryContentIds);

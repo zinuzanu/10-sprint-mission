@@ -1,13 +1,15 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.MessageDto;
-import com.sprint.mission.discodeit.dto.MessageDto.UpdateRequest;
+import com.sprint.mission.discodeit.dto.MessageUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -31,49 +33,47 @@ public class BasicMessageService implements MessageService {
   private final ChannelRepository channelRepository;
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
+  private final MessageMapper messageMapper;
 
   @Transactional
   @Override
-  public MessageDto.Response create(MessageDto.CreateRequest request,
+  public MessageDto create(MessageCreateRequest request,
       List<MultipartFile> attachments) {
-    User author = userRepository.findById(request.authorId())
+    User author = userRepository.findById(request.getAuthorId())
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    Channel channel = channelRepository.findById(request.channelId())
+    Channel channel = channelRepository.findById(request.getChannelId())
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
     List<BinaryContent> attachmentContents = processAttachments(attachments);
 
-    Message message = new Message(
-        author,
-        channel,
-        request.content(),
-        attachmentContents
-    );
-    return convertToResponse(messageRepository.save(message));
+    Message message = messageMapper.toEntity(request);
+
+    message.assignMetadata(author, channel, request.getContent(), attachmentContents);
+    return messageMapper.toDto(messageRepository.save(message));
   }
 
   @Override
-  public MessageDto.Response findById(UUID id) {
-    return convertToResponse(findMessageEntityById(id));
+  public MessageDto findById(UUID id) {
+    return messageMapper.toDto(findMessageEntityById(id));
   }
 
   @Override
-  public List<MessageDto.Response> findAllByChannelId(UUID channelId) {
+  public List<MessageDto> findAllByChannelId(UUID channelId) {
     Channel channel = channelRepository.findById(channelId)
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
     return messageRepository.findByChannel(channel).stream()
-        .map(this::convertToResponse)
+        .map(messageMapper::toDto)
         .toList();
   }
 
   @Transactional
   @Override
-  public MessageDto.Response update(UUID messageId, UpdateRequest request) {
+  public MessageDto update(UUID messageId, MessageUpdateRequest request) {
     Message message = findMessageEntityById(messageId);
 
-    message.update(request.newContent());
-    return convertToResponse(message);
+    message.update(request.getNewContent());
+    return messageMapper.toDto(message);
   }
 
   @Transactional
@@ -111,19 +111,5 @@ public class BasicMessageService implements MessageService {
   private Message findMessageEntityById(UUID id) {
     return messageRepository.findById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
-  }
-
-  // [헬퍼 메서드]: 요구사항에 맞는 Response DTO 변환
-  private MessageDto.Response convertToResponse(Message message) {
-    UUID authorId = (message.getAuthor() != null) ? message.getAuthor().getId() : null;
-    return new MessageDto.Response(
-        message.getId(),
-        message.getContent(),
-        authorId,
-        message.getChannel().getId(),
-        message.getCreatedAt(),
-        message.getUpdatedAt(),
-        message.getAttachments().stream().map(BinaryContent::getId).toList()
-    );
   }
 }

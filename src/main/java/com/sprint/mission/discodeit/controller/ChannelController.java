@@ -1,6 +1,9 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.dto.ChannelCreatePrivateRequest;
+import com.sprint.mission.discodeit.dto.ChannelCreatePublicRequest;
 import com.sprint.mission.discodeit.dto.ChannelDto;
+import com.sprint.mission.discodeit.dto.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.service.ChannelService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,8 +35,8 @@ public class ChannelController {
   @Operation(summary = "공개 채널 생성", description = "누구나 참여할 수 있는 공개 채널을 생성합니다. (생성자 정보 기록 로직 추가 예정)")
   @PostMapping("/public")
   @ResponseStatus(HttpStatus.CREATED)
-  public ChannelDto.Response createPublicChannel(
-      @RequestBody ChannelDto.CreatePublicRequest createPublicRequest) {
+  public ChannelDto createPublicChannel(
+      @RequestBody ChannelCreatePublicRequest createPublicRequest) {
     return channelService.createPublicChannel(createPublicRequest);
   }
 
@@ -41,17 +44,17 @@ public class ChannelController {
   @Operation(summary = "비공개 채널 생성", description = "특정 사용자들만 참여하는 비공개 채널을 생성합니다.")
   @PostMapping("/private")
   @ResponseStatus(HttpStatus.CREATED)
-  public ChannelDto.Response createPrivateChannel(
-      @RequestBody ChannelDto.CreatePrivateRequest createPrivateRequest) {
+  public ChannelDto createPrivateChannel(
+      @RequestBody ChannelCreatePrivateRequest createPrivateRequest) {
     return channelService.createPrivateChannel(createPrivateRequest);
   }
 
   @Operation(summary = "채널 정보 수정", description = "기존 채널의 이름이나 설명을 수정합니다.")
   @PatchMapping("/{channelId}")
-  public ChannelDto.Response update(
+  public ChannelDto update(
       @Parameter(description = "수정할 채널의 UUID", required = true)
       @PathVariable UUID channelId,
-      @RequestBody ChannelDto.UpdateRequest request) {
+      @RequestBody ChannelUpdateRequest request) {
     return channelService.update(channelId, request);
   }
 
@@ -66,7 +69,7 @@ public class ChannelController {
 
   @Operation(summary = "유저별 채널 목록 조회", description = "특정 유저가 참여하고 있는 모든 채널 목록을 가져옵니다.")
   @GetMapping
-  public List<ChannelDto.Response> getChannelsByUserId(
+  public List<ChannelDto> getChannelsByUserId(
       @Parameter(description = "조회할 유저의 UUID", required = true)
       @RequestParam UUID userId) {
     return channelService.findAllByUserId(userId);

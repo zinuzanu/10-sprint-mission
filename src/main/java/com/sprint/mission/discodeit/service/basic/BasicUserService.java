@@ -1,22 +1,23 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
-import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,44 +30,39 @@ public class BasicUserService implements UserService {
 
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
-  private final MessageRepository messageRepository;
   private final BinaryContentRepository binaryContentRepository;
   private final ReadStatusRepository readStatusRepository;
+  private final UserMapper userMapper;
 
   @Transactional
   @Override
-  public UserDto.Response create(UserDto.CreateRequest request, MultipartFile profile) {
-    validateDuplicateEmail(request.email());
-    validateDuplicateUserName(request.username());
+  public UserDto create(UserCreateRequest request, MultipartFile profile) {
+    validateDuplicateEmail(request.getEmail());
+    validateDuplicateUserName(request.getUsername());
 
     BinaryContent profileImage = processImage(null, profile);
 
-    User newUser = new User(
-        request.username(),
-        request.email(),
-        request.password()
-    );
+    User newUser = userMapper.toEntity(request);
 
     if (profileImage != null) {
       newUser.update(null, null, null, profileImage);
     }
 
     new UserStatus(newUser);
-
     userRepository.save(newUser);
-    return convertToResponse(newUser);
+    return userMapper.toDto(newUser);
   }
 
   @Override
-  public UserDto.Response findById(UUID id) {
-    return convertToResponse(findUserEntityById(id));
+  public UserDto findById(UUID id) {
+    return userMapper.toDto(findUserEntityById(id));
   }
 
   @Override
-  public List<UserDto.Response> findAll() {
+  public List<UserDto> findAll() {
     return userRepository.findAll().stream()
-        .map(this::convertToResponse)
-        .collect(Collectors.toList());
+        .map(userMapper::toDto)
+        .toList();
   }
 
   @Override
@@ -81,23 +77,28 @@ public class BasicUserService implements UserService {
 
   @Transactional
   @Override
-  public UserDto.Response update(UUID userId, UserDto.UpdateRequest request,
+  public UserDto update(UUID userId, UserUpdateRequest request,
       MultipartFile profile) {
     User user = findUserEntityById(userId);
 
-    if (request.newEmail() != null && !request.newEmail().equals(user.getEmail())) {
-      validateDuplicateEmail(request.newEmail());
+    if (request.getNewEmail() != null && !request.getNewEmail().equals(user.getEmail())) {
+      validateDuplicateEmail(request.getNewEmail());
     }
 
     BinaryContent newProfile = processImage(user.getProfile(), profile);
 
     user.update(
-        request.newUsername(),
-        request.newEmail(),
-        request.newPassword(),
+        request.getNewUsername(),
+        request.getNewEmail(),
+        request.getNewPassword(),
         newProfile
     );
-    return convertToResponse(user);
+
+    if (newProfile != null) {
+      user.update(null, null, null, newProfile);
+    }
+
+    return userMapper.toDto(user);
   }
 
   @Transactional
@@ -134,26 +135,9 @@ public class BasicUserService implements UserService {
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
   }
 
-  // [헬퍼 메서드]: 엔티티를 클라이언트 응답용 DTO로 변환 및 데이터 가공
-  private UserDto.Response convertToResponse(User user) {
-    boolean online = false;
-    if (user.getStatus() != null) {
-      online = user.getStatus().isOnline();
-    }
-    return new UserDto.Response(
-        user.getId(),
-        user.getCreatedAt(),
-        user.getUpdatedAt(),
-        user.getUsername(),
-        user.getEmail(),
-        user.getProfile() != null ? user.getProfile().getId() : null,
-        online
-    );
-  }
-
   // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(updateLastReadAt)
   private BinaryContent processImage(BinaryContent existingProfile, MultipartFile file) {
-    if (file == null || binaryContentRepository == null) {
+    if (file == null || file.isEmpty() || binaryContentRepository == null) {
       return existingProfile;
     }
 
