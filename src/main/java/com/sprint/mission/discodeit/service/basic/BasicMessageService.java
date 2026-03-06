@@ -15,6 +15,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,7 @@ public class BasicMessageService implements MessageService {
   private final ChannelRepository channelRepository;
   private final UserRepository userRepository;
   private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentStorage binaryContentStorage;
   private final MessageMapper messageMapper;
 
   @Transactional
@@ -46,10 +48,14 @@ public class BasicMessageService implements MessageService {
 
     List<BinaryContent> attachmentContents = processAttachments(attachments);
 
-    Message message = messageMapper.toEntity(request);
-
-    message.assignMetadata(author, channel, request.getContent(), attachmentContents);
-    return messageMapper.toDto(messageRepository.save(message));
+    Message message = new Message(
+        author,
+        channel,
+        request.getContent(),
+        attachmentContents
+    );
+    Message saved = messageRepository.save(message);
+    return messageMapper.toDto(saved);
   }
 
   @Override
@@ -96,10 +102,11 @@ public class BasicMessageService implements MessageService {
         BinaryContent content = new BinaryContent(
             file.getOriginalFilename(),
             file.getSize(),
-            file.getContentType(),
-            file.getBytes()
+            file.getContentType()
         );
-        results.add(binaryContentRepository.save(content));
+        BinaryContent saved = binaryContentRepository.save(content);
+        binaryContentStorage.put(saved.getId(), file.getBytes());
+        results.add(saved);
       } catch (IOException e) {
         throw new BusinessException(ErrorCode.FILE_SAVE_ERROR);
       }

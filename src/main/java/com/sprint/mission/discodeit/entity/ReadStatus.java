@@ -43,12 +43,6 @@ public class ReadStatus extends BaseUpdatableEntity {
     this.lastReadAt = Instant.now();
   }
 
-  // 관계 조립 메서드
-  public void assignUserAndChannel(User user, Channel channel) {
-    this.user = user;
-    this.channel = channel;
-  }
-
   public void updateLastReadAt() {
     this.lastReadAt = Instant.now();
   }

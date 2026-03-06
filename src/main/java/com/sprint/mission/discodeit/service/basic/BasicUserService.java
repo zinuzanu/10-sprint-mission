@@ -15,6 +15,7 @@ import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +32,7 @@ public class BasicUserService implements UserService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentStorage binaryContentStorage;
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper userMapper;
 
@@ -151,10 +153,11 @@ public class BasicUserService implements UserService {
       BinaryContent newImage = new BinaryContent(
           file.getOriginalFilename(),
           file.getSize(),
-          file.getContentType(),
-          file.getBytes()
+          file.getContentType()
       );
-      return binaryContentRepository.save(newImage);
+      BinaryContent saved = binaryContentRepository.save(newImage);
+      binaryContentStorage.put(saved.getId(), file.getBytes());
+      return saved;
     } catch (IOException e) {
       throw new BusinessException(ErrorCode.FILE_SAVE_ERROR);
     }

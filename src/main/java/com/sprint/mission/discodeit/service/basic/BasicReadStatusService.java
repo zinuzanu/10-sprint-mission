@@ -42,9 +42,7 @@ public class BasicReadStatusService implements ReadStatusService {
     Channel channel = channelRepository.findById(request.getChannelId())
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-    ReadStatus readStatus = readStatusMapper.toEntity(request);
-
-    readStatus.assignUserAndChannel(user, channel);
+    ReadStatus readStatus = new ReadStatus(user, channel);
 
     return readStatusMapper.toDto(readStatusRepository.save(readStatus));
   }

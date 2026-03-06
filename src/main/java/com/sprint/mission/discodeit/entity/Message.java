@@ -64,15 +64,6 @@ public class Message extends BaseUpdatableEntity {
     }
   }
 
-  // 관계 조립 메서드
-  public void assignMetadata(User author, Channel channel, String content,
-      List<BinaryContent> attachments) {
-    this.author = author;
-    this.channel = channel;
-    this.content = content;
-    this.attachments = attachments;
-  }
-
   // 메세지 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
   // newContent.length() < 1는 항상 false를 반환하므로 작성 하지 않음
   private void validateContent(String content) {

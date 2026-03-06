@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create
     show-sql: true
     properties:
       hibernate:
@@ -30,6 +30,10 @@ server:
   port: ${PORT:8080}
 
 discodeit:
+  storage:
+    type: local
+    local:
+      root-path: uploads
   repository:
     type: file
     file-directory: .discodeit
