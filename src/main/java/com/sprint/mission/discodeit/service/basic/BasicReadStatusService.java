@@ -32,19 +32,21 @@ public class BasicReadStatusService implements ReadStatusService {
   @Transactional
   @Override
   public ReadStatusDto create(ReadStatusCreateRequest request) {
-    if (readStatusRepository.existsByChannelIdAndUserId(request.getChannelId(),
-        request.getUserId())) {
-      throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
-    }
+    return readStatusRepository.findByChannelIdAndUserId(request.getChannelId(),
+            request.getUserId())
+        .map(existingStatus -> {
+          existingStatus.updateLastReadAt();
+          return readStatusMapper.toDto(existingStatus);
+        })
+        .orElseGet(() -> {
+          User user = userRepository.findById(request.getUserId())
+              .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+          Channel channel = channelRepository.findById(request.getChannelId())
+              .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-    User user = userRepository.findById(request.getUserId())
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-    Channel channel = channelRepository.findById(request.getChannelId())
-        .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
-
-    ReadStatus readStatus = new ReadStatus(user, channel);
-
-    return readStatusMapper.toDto(readStatusRepository.save(readStatus));
+          ReadStatus readStatus = new ReadStatus(user, channel);
+          return readStatusMapper.toDto(readStatusRepository.save(readStatus));
+        });
   }
 
   @Override

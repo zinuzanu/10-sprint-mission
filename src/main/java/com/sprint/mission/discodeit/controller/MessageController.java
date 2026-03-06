@@ -3,6 +3,7 @@ package com.sprint.mission.discodeit.controller;
 import com.sprint.mission.discodeit.dto.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.MessageDto;
 import com.sprint.mission.discodeit.dto.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
 import com.sprint.mission.discodeit.service.MessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -10,6 +11,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -63,9 +67,10 @@ public class MessageController {
 
   @Operation(summary = "특정 채널 메시지 목록 조회", description = "특정 채널의 모든 메시지 내역을 조회합니다.")
   @GetMapping
-  public List<MessageDto> findAllByChannelId(
+  public PageResponse<MessageDto> findAllByChannelId(
       @Parameter(description = "조회할 채널의 UUID", required = true)
-      @RequestParam UUID channelId) {
-    return messageService.findAllByChannelId(channelId);
+      @RequestParam UUID channelId,
+      @PageableDefault(size = 50, sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
+    return messageService.findAllByChannelId(channelId, pageable);
   }
 }

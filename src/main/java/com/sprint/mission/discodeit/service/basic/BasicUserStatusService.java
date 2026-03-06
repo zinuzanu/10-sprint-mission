@@ -62,9 +62,10 @@ public class BasicUserStatusService implements UserStatusService {
   @Transactional
   @Override
   public UserStatusDto updateByUserId(UUID userId, Instant lastOnlineAt) {
-    UserStatus userStatus = getOrCreateUserStatus(userId);
+    UserStatus userStatus = userStatusRepository.findByUserId(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
     userStatus.updateActiveTime();
-    return userStatusMapper.toDto(userStatusRepository.save(userStatus));
+    return userStatusMapper.toDto(userStatus);
   }
 
   @Transactional
@@ -78,15 +79,5 @@ public class BasicUserStatusService implements UserStatusService {
   private UserStatus findUserStatusEntityById(UUID id) {
     return userStatusRepository.findById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
-  }
-
-  // [헬퍼 메서드]: 유저 상태의 존재 여부에 따른 조회/생성 로직
-  private UserStatus getOrCreateUserStatus(UUID userId) {
-    return userStatusRepository.findByUserId(userId)
-        .orElseGet(() -> {
-          User user = userRepository.findById(userId)
-              .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-          return userStatusRepository.save(new UserStatus(user));
-        });
   }
 }

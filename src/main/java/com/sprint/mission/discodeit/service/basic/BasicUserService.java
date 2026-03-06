@@ -43,14 +43,14 @@ public class BasicUserService implements UserService {
     validateDuplicateUserName(request.getUsername());
 
     BinaryContent profileImage = processImage(null, profile);
-
-    User newUser = userMapper.toEntity(request);
+    User newUser = userRepository.save(userMapper.toEntity(request));
 
     if (profileImage != null) {
       newUser.update(null, null, null, profileImage);
     }
 
-    new UserStatus(newUser);
+    UserStatus status = new UserStatus(newUser);
+    newUser.setUserStatus(status);
     userRepository.save(newUser);
     return userMapper.toDto(newUser);
   }

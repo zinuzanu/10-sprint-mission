@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 @Mapper(uses = {UserMapper.class})
 public interface ChannelMapper {
 
+  @Mapping(target = "participants", source = "readStatuses")
   ChannelDto toDto(Channel entity);
 
   @Mapping(target = "id", ignore = true)

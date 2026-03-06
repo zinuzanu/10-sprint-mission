@@ -41,6 +41,11 @@ public class User extends BaseUpdatableEntity {
   )
   private UserStatus status;
 
+  // 연관 관계 편의 메서드
+  public void setUserStatus(UserStatus status) {
+    this.status = status;
+  }
+
   public User(String username, String email, String password) {
     super();
     validateUser(username, email, password);
