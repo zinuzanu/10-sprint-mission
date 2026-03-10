@@ -30,7 +30,7 @@ public class JCFChannelRepository implements ChannelRepository {
     }
 
     @Override
-    public List<Channel> findAll() {
+    public List<Channel> findAllUsers() {
         return new ArrayList<>(storage.values());
     }
 

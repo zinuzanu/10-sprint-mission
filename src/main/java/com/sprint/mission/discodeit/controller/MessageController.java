@@ -11,9 +11,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort.Direction;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -65,12 +62,15 @@ public class MessageController {
     messageService.delete(messageId);
   }
 
-  @Operation(summary = "특정 채널 메시지 목록 조회", description = "특정 채널의 모든 메시지 내역을 조회합니다.")
+  @Operation(summary = "특정 채널 메시지 목록 조회", description = "커서 기반으로 특정 채널의 모든 메시지 내역을 조회합니다.")
   @GetMapping
   public PageResponse<MessageDto> findAllByChannelId(
       @Parameter(description = "조회할 채널의 UUID", required = true)
       @RequestParam UUID channelId,
-      @PageableDefault(size = 50, sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
-    return messageService.findAllByChannelId(channelId, pageable);
+      @Parameter(description = "다음 페이지 조회를 위한 커서 (마지막 메시지의 ID)")
+      @RequestParam(required = false) UUID cursor,
+      @Parameter(description = "조회할 메시지 개수")
+      @RequestParam(defaultValue = "50") int size) {
+    return messageService.findAllByChannelId(channelId, cursor, size);
   }
 }

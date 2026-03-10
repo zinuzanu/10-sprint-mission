@@ -35,6 +35,14 @@ public class Channel extends BaseUpdatableEntity {
   @OneToMany(mappedBy = "channel", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ReadStatus> readStatuses = new ArrayList<>();
 
+  public void addReadStatus(ReadStatus readStatus) {
+    this.readStatuses.add(readStatus);
+  }
+
+  public List<User> getParticipants() {
+    return this.readStatuses.stream().map(ReadStatus::getUser).toList();
+  }
+
   public Channel(String name, String description, ChannelType type) {
     super();
     if (type == ChannelType.PUBLIC) {
@@ -57,6 +65,7 @@ public class Channel extends BaseUpdatableEntity {
       this.description = newDescription;
     }
   }
+
 
   // 채널 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
   private void validateChannel(String channelName) {

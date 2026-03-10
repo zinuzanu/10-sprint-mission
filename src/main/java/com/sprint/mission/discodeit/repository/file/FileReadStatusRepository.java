@@ -63,13 +63,13 @@ public class FileReadStatusRepository implements ReadStatusRepository {
 
   @Override
   public List<ReadStatus> findAllByUserId(UUID userId) {
-    return findAll().stream()
+    return findAllUsers().stream()
         .filter(rs -> rs.getUser().getId().equals(userId))
         .toList();
   }
 
   @Override
-  public List<ReadStatus> findAll() {
+  public List<ReadStatus> findAllUsers() {
     try (var stream = Files.list(DIRECTORY)) {
       return stream
           .filter(path -> path.toString().endsWith(EXTENSION))

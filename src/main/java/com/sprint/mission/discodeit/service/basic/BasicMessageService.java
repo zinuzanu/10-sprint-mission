@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,7 +60,10 @@ public class BasicMessageService implements MessageService {
         attachmentContents
     );
     Message saved = messageRepository.save(message);
-    return messageMapper.toDto(saved);
+    MessageDto dto = messageMapper.toDto(saved);
+    dto.getChannel().setLastMessageAt(saved.getCreatedAt());
+
+    return dto;
   }
 
   @Override
@@ -69,13 +72,28 @@ public class BasicMessageService implements MessageService {
   }
 
   @Override
-  public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Pageable pageable) {
+  public PageResponse<MessageDto> findAllByChannelId(UUID channelId, UUID cursor, int size) {
     Channel channel = channelRepository.findById(channelId)
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
-    Slice<Message> messageSlice = messageRepository.findSliceByChannel(channel, pageable);
-    Slice<MessageDto> dtoSlice = messageSlice.map(messageMapper::toDto);
-    return pageResponseMapper.fromSlice(dtoSlice);
+    // 1. Repository 조회 (hasNext 판단을 위해 size + 1개 요청)
+    // PageRequest.of(0, size + 1)을 사용하여 LIMIT (size + 1) 효과를 냅니다.
+    Pageable limit = PageRequest.of(0, size + 1);
+    List<Message> entities = (cursor == null)
+        ? messageRepository.findByChannelOrderByCreatedAtDesc(channel, limit)
+        : messageRepository.findByChannelAndCursor(channel, cursor, limit);
+
+    // 2. DTO 변환
+    List<MessageDto> dtos = entities.stream().map(messageMapper::toDto).toList();
+
+    // 3. PageResponseMapper를 통한 응답 객체 생성
+    // (작성하신 toCursorPageResponse 내부에서 hasNext와 nextCursor가 계산됩니다)
+    return pageResponseMapper.toCursorPageResponse(
+        dtos,
+        size,
+        MessageDto::getId,
+        messageRepository.countByChannel(channel)
+    );
   }
 
   @Transactional
@@ -121,7 +139,7 @@ public class BasicMessageService implements MessageService {
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
   private Message findMessageEntityById(UUID id) {
-    return messageRepository.findById(id)
+    return messageRepository.findWithAuthorAndAttachmentsById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
   }
 }

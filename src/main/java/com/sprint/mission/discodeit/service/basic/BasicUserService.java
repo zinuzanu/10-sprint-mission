@@ -43,7 +43,7 @@ public class BasicUserService implements UserService {
     validateDuplicateUserName(request.getUsername());
 
     BinaryContent profileImage = processImage(null, profile);
-    User newUser = userRepository.save(userMapper.toEntity(request));
+    User newUser = userMapper.toEntity(request);
 
     if (profileImage != null) {
       newUser.update(null, null, null, profileImage);
@@ -51,8 +51,10 @@ public class BasicUserService implements UserService {
 
     UserStatus status = new UserStatus(newUser);
     newUser.setUserStatus(status);
-    userRepository.save(newUser);
-    return userMapper.toDto(newUser);
+
+    User saved = userRepository.save(newUser);
+
+    return userMapper.toDto(saved);
   }
 
   @Override
@@ -61,14 +63,14 @@ public class BasicUserService implements UserService {
   }
 
   @Override
-  public List<UserDto> findAll() {
-    return userRepository.findAll().stream()
+  public List<UserDto> findAllUsers() {
+    return userRepository.findAllWithDetails().stream()
         .map(userMapper::toDto)
         .toList();
   }
 
   @Override
-  public List<User> findUsersByChannelId(UUID channelId) {
+  public List<User> findAllByChannelId(UUID channelId) {
     if (!channelRepository.existsById(channelId)) {
       throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
     }
@@ -95,10 +97,6 @@ public class BasicUserService implements UserService {
         request.getNewPassword(),
         newProfile
     );
-
-    if (newProfile != null) {
-      user.update(null, null, null, newProfile);
-    }
 
     return userMapper.toDto(user);
   }
@@ -133,13 +131,13 @@ public class BasicUserService implements UserService {
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
   private User findUserEntityById(UUID id) {
-    return userRepository.findById(id)
+    return userRepository.findWithDetailsById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
   }
 
   // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(updateLastReadAt)
   private BinaryContent processImage(BinaryContent existingProfile, MultipartFile file) {
-    if (file == null || file.isEmpty() || binaryContentRepository == null) {
+    if (file == null || file.isEmpty()) {
       return existingProfile;
     }
 

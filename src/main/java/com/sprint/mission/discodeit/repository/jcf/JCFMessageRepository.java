@@ -32,7 +32,7 @@ public class JCFMessageRepository implements MessageRepository {
   }
 
   @Override
-  public List<Message> findAll() {
+  public List<Message> findAllUsers() {
     return new ArrayList<>(storage.values());
   }
 

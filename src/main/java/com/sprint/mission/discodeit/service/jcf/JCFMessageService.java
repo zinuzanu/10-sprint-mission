@@ -43,7 +43,7 @@
 //    }
 //
 //    @Override
-//    public List<Message> findAll() {
+//    public List<Message> findAllUsers() {
 //        return new ArrayList<>(messages);
 //    }
 //

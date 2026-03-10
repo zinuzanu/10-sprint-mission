@@ -14,6 +14,7 @@ import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
 import java.util.List;
 import java.util.UUID;
@@ -29,37 +30,50 @@ public class BasicChannelService implements ChannelService {
   private final ChannelRepository channelRepository;
   private final MessageRepository messageRepository;
   private final ReadStatusRepository readStatusRepository;
+  private final UserRepository userRepository;
   private final ChannelMapper channelMapper;
 
   @Transactional
   @Override
   public ChannelDto createPublicChannel(ChannelCreatePublicRequest request) {
     Channel newChannel = channelMapper.toEntity(request);
-    return channelMapper.toDto(channelRepository.save(newChannel));
+    Channel savedPublicChannel = channelRepository.save(newChannel);
+    return channelMapper.toDto(savedPublicChannel);
   }
 
   @Transactional
   @Override
   public ChannelDto createPrivateChannel(ChannelCreatePrivateRequest request) {
+    // 1. 참여자 리스트를 상세 정보와 함께 일괄 조회 (N+1 방지 및 profile null 방지)
+    List<User> participants = userRepository.findAllWithDetailsByIdIn(request.getParticipantIds());
+
+    if (participants.size() != request.getParticipantIds().size()) {
+      throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+    }
+
+    // 2. 신규 비공개 채널 생성
     Channel newChannel = new Channel(null, null, ChannelType.PRIVATE);
-    Channel saved = channelRepository.save(newChannel);
 
-    request.getParticipantIds().forEach(userId -> {
-      User user = findUserFromExistingReadStatus(userId);
-      readStatusRepository.save(new ReadStatus(user, saved));
+    // 3. 관계 설정 (CascadeType.ALL 설정이 되어 있으므로 addReadStatus만 수행)
+    participants.forEach(user -> {
+      ReadStatus rs = new ReadStatus(user, newChannel);
+      newChannel.addReadStatus(rs);
     });
-    return channelMapper.toDto(saved);
+
+    // 4. 저장 및 DTO 변환 (ChannelMapper가 UserMapper를 통해 완전한 UserDto를 생성)
+    Channel savedChannel = channelRepository.save(newChannel);
+    return channelMapper.toDto(savedChannel, participants, null);
   }
 
   @Override
-  public ChannelDto findById(UUID id) {
-    return channelMapper.toDto(findChannelEntityById(id));
+  public ChannelDto findById(UUID channelId) {
+    return channelMapper.toDto(findChannelEntityById(channelId));
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<ChannelDto> findAllByUserId(UUID userId) {
-    return channelRepository.findAll().stream()
-        .filter(c -> c.getType() == ChannelType.PUBLIC || isMember(userId, c.getId()))
+    return channelRepository.findAllVisibleChannelsWithParticipants(userId).stream()
         .map(channelMapper::toDto)
         .toList();
   }
@@ -89,21 +103,6 @@ public class BasicChannelService implements ChannelService {
     readStatusRepository.deleteByChannel(channel);
 
     channelRepository.delete(channel);
-  }
-
-  // [헬퍼 메서드]: 유저 객체 발굴용 (가볍게 필터링된 메서드 활용)
-  private User findUserFromExistingReadStatus(UUID userId) {
-    return readStatusRepository.findAllByUserId(userId).stream()
-        .findFirst()
-        .map(ReadStatus::getUser)
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-  }
-
-  // [헬퍼 메서드]: 특정 유저의 채널 가입 여부를 확인
-  private boolean isMember(UUID userId, UUID channelId) {
-    return readStatusRepository.findAll().stream()
-        .anyMatch(
-            rs -> rs.getUser().getId().equals(userId) && rs.getChannel().getId().equals(channelId));
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화

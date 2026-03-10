@@ -61,7 +61,7 @@ public class FileBinaryContentRepository implements BinaryContentRepository {
     }
 
     @Override
-    public List<BinaryContent> findAll() {
+    public List<BinaryContent> findAllUsers() {
         try (Stream<Path> stream = Files.list(DIRECTORY)) {
             return stream
                     .filter(path -> path.toString().endsWith(EXTENSION))

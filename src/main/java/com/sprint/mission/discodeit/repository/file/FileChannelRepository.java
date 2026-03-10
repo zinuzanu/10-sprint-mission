@@ -61,7 +61,7 @@ public class FileChannelRepository implements ChannelRepository {
     }
 
     @Override
-    public List<Channel> findAll() {
+    public List<Channel> findAllUsers() {
         try (Stream<Path> stream = Files.list(DIRECTORY)) {
             return stream
                     .filter(path -> path.toString().endsWith(EXTENSION))
@@ -87,7 +87,7 @@ public class FileChannelRepository implements ChannelRepository {
         }
     }
 
-    // [헬퍼 메서드] findId, findAll: 중복되는 역직렬화 로직 통합
+    // [헬퍼 메서드] findId, findAllUsers: 중복되는 역직렬화 로직 통합
     private Optional<Channel> readChannelFromFile(Path path) {
         if (Files.notExists(path)) return Optional.empty();
 

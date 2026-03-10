@@ -30,7 +30,7 @@ public class JCFUserStatusRepository implements UserStatusRepository {
     }
 
     @Override
-    public List<UserStatus> findAll() {
+    public List<UserStatus> findAllUsers() {
         return new ArrayList<>(storage.values());
     }
 

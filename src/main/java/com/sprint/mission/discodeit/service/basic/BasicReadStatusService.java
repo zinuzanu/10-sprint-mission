@@ -32,21 +32,20 @@ public class BasicReadStatusService implements ReadStatusService {
   @Transactional
   @Override
   public ReadStatusDto create(ReadStatusCreateRequest request) {
-    return readStatusRepository.findByChannelIdAndUserId(request.getChannelId(),
-            request.getUserId())
-        .map(existingStatus -> {
-          existingStatus.updateLastReadAt();
-          return readStatusMapper.toDto(existingStatus);
-        })
-        .orElseGet(() -> {
-          User user = userRepository.findById(request.getUserId())
-              .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-          Channel channel = channelRepository.findById(request.getChannelId())
-              .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+    ReadStatus existing = readStatusRepository
+        .findByChannelIdAndUserId(request.getChannelId(), request.getUserId())
+        .orElse(null);
 
-          ReadStatus readStatus = new ReadStatus(user, channel);
-          return readStatusMapper.toDto(readStatusRepository.save(readStatus));
-        });
+    if (existing != null) {
+      existing.updateLastReadAt();
+      return readStatusMapper.toDto(existing);
+    }
+    User user = findUserEntityById(request.getUserId());
+    Channel channel = findChannelEntityById(request.getChannelId());
+
+    ReadStatus readStatus = new ReadStatus(user, channel);
+    return readStatusMapper.toDto(readStatusRepository.save(readStatus));
+
   }
 
   @Override
@@ -80,5 +79,17 @@ public class BasicReadStatusService implements ReadStatusService {
   private ReadStatus findReadStatusEntityById(UUID id) {
     return readStatusRepository.findById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
+  }
+
+  // [헬퍼 메서드]: 유저 ID 조회
+  private User findUserEntityById(UUID id) {
+    return userRepository.findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+  }
+
+  // [헬퍼 메서드]: 채널 ID 조회
+  private Channel findChannelEntityById(UUID id) {
+    return channelRepository.findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
   }
 }

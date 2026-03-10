@@ -39,7 +39,7 @@
 //    }
 //
 //    @Override
-//    public List<Channel> findAll() {
+//    public List<Channel> findAllUsers() {
 //        return new ArrayList<>(channels);
 //    }
 //

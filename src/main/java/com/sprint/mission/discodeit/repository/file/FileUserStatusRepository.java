@@ -63,7 +63,7 @@ public class FileUserStatusRepository implements UserStatusRepository {
   }
 
   @Override
-  public List<UserStatus> findAll() {
+  public List<UserStatus> findAllUsers() {
     try (Stream<Path> stream = Files.list(DIRECTORY)) {
       return stream
           .filter(path -> path.toString().endsWith(EXTENSION))

@@ -30,7 +30,7 @@ public class JCFBinaryContentRepository implements BinaryContentRepository {
     }
 
     @Override
-    public List<BinaryContent> findAll() {
+    public List<BinaryContent> findAllUsers() {
         return new ArrayList<>(storage.values());
     }
 

@@ -62,20 +62,20 @@ public class FileUserRepository implements UserRepository {
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return findAll().stream()
+        return findAllUsers().stream()
                 .filter(u -> u.getEmail().equals(email))
                 .findFirst();
     }
 
     @Override
     public Optional<User> findByUsername(String username) {
-        return findAll().stream()
+        return findAllUsers().stream()
                 .filter(u -> u.getUsername().equals(username))
                 .findFirst();
     }
 
     @Override
-    public List<User> findAll() {
+    public List<User> findAllUsers() {
         try (Stream<Path> stream = Files.list(DIRECTORY)) {
             return stream
                     .filter(path -> path.toString().endsWith(EXTENSION))
@@ -101,7 +101,7 @@ public class FileUserRepository implements UserRepository {
         }
     }
 
-    // [헬퍼 메서드] findId, findAll: 중복되는 역직렬화 로직 통합
+    // [헬퍼 메서드] findId, findAllUsers: 중복되는 역직렬화 로직 통합
     private Optional<User> readUserFromFile(Path path) {
         if (Files.notExists(path)) return Optional.empty();
 

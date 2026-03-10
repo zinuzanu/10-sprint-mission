@@ -64,7 +64,7 @@ public class FileMessageRepository implements MessageRepository {
   }
 
   @Override
-  public List<Message> findAll() {
+  public List<Message> findAllUsers() {
     try (var stream = Files.list(DIRECTORY)) {
       return stream
           .filter(path -> path.toString().endsWith(EXTENSION))
@@ -90,7 +90,7 @@ public class FileMessageRepository implements MessageRepository {
     }
   }
 
-  // [헬퍼 메서드] findId, findAll: 중복되는 역직렬화 로직 통합
+  // [헬퍼 메서드] findId, findAllUsers: 중복되는 역직렬화 로직 통합
   private Optional<Message> readMessageFromFile(Path path) {
     if (Files.notExists(path)) {
       return Optional.empty();
@@ -105,7 +105,7 @@ public class FileMessageRepository implements MessageRepository {
 
   @Override
   public Optional<Instant> findLatestMessageTimeByChannelId(UUID channelId) {
-    return findAll().stream()
+    return findAllUsers().stream()
         .filter(m -> m.getChannel().equals(channelId))
         .map(Message::getCreatedAt) // BaseEntity의 Instant 필드
         .max(Instant::compareTo);

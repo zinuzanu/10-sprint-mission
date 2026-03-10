@@ -41,7 +41,7 @@
 //
 //            messageCreateTest(messageService, channel, user);
 //
-//            System.out.println("현재 등록된 전체 유저 수: " + userService.findAll().size());
+//            System.out.println("현재 등록된 전체 유저 수: " + userService.findAllUsers().size());
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //        }

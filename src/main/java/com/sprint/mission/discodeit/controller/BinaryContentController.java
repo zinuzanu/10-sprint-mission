@@ -38,7 +38,7 @@ public class BinaryContentController {
   public List<BinaryContentDto> findAllByIdIn(
       @Parameter(description = "조회할 파일 UUID 리스트", required = true)
       @RequestParam List<UUID> binaryContentIds) {
-    return binaryContentService.findAllIdIn(binaryContentIds);
+    return binaryContentService.findAllByIdIn(binaryContentIds);
   }
 
   @Operation(summary = "파일 다운로드", description = "ID를 통해 실제 바이너리 파일을 다운로드합니다.")

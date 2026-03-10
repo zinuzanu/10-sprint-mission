@@ -74,5 +74,4 @@ public class ChannelController {
       @RequestParam UUID userId) {
     return channelService.findAllByUserId(userId);
   }
-  // TODO: 채널 입장과 퇴장 로직 구현 예졍
 }

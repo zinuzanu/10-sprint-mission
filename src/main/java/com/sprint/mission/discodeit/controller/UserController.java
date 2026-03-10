@@ -70,7 +70,7 @@ public class UserController {
   @Operation(summary = "모든 유저 조회", description = "시스템에 등록된 전체 유저 리스트를 가져옵니다.")
   @GetMapping
   public ResponseEntity<List<UserDto>> findAll() {
-    return ResponseEntity.ok(userService.findAll());
+    return ResponseEntity.ok(userService.findAllUsers());
   }
 
   @Operation(summary = "유저 온라인 상태 업데이트", description = "유저의 접속 상태 정보를 최신화합니다.")

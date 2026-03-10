@@ -13,7 +13,7 @@ public interface ChannelService {
 
   ChannelDto createPrivateChannel(ChannelCreatePrivateRequest request);
 
-  ChannelDto findById(UUID id);
+  ChannelDto findById(UUID channelId);
 
   List<ChannelDto> findAllByUserId(UUID userId);
 

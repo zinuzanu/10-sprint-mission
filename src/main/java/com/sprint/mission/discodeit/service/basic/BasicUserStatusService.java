@@ -11,7 +11,6 @@ import com.sprint.mission.discodeit.mapper.UserStatusMapper;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.repository.UserStatusRepository;
 import com.sprint.mission.discodeit.service.UserStatusService;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +33,7 @@ public class BasicUserStatusService implements UserStatusService {
       throw new BusinessException(ErrorCode.USER_STATUS_ALREADY_EXISTS);
     }
 
-    User user = userRepository.findById(request.getUserId())
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    User user = findUserEntityById(request.getUserId());
 
     UserStatus userStatus = new UserStatus(user);
     return userStatusMapper.toDto(userStatusRepository.save(userStatus));
@@ -47,8 +45,8 @@ public class BasicUserStatusService implements UserStatusService {
   }
 
   @Override
-  public List<UserStatusDto> findAll() {
-    return userStatusRepository.findAll().stream()
+  public List<UserStatusDto> findAllStatuses() {
+    return userStatusRepository.findAllWithUser().stream()
         .map(userStatusMapper::toDto)
         .toList();
   }
@@ -56,14 +54,7 @@ public class BasicUserStatusService implements UserStatusService {
   @Transactional
   @Override
   public UserStatusDto update(UUID userId, UserStatusUpdateRequest request) {
-    return updateByUserId(userId, request.getNewLastActiveAt());
-  }
-
-  @Transactional
-  @Override
-  public UserStatusDto updateByUserId(UUID userId, Instant lastOnlineAt) {
-    UserStatus userStatus = userStatusRepository.findByUserId(userId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+    UserStatus userStatus = findUserStatusEntityByUserId(userId);
     userStatus.updateActiveTime();
     return userStatusMapper.toDto(userStatus);
   }
@@ -75,9 +66,21 @@ public class BasicUserStatusService implements UserStatusService {
     userStatusRepository.delete(userStatus);
   }
 
-  // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
+  // [헬퍼 메서드]: PK 조회
   private UserStatus findUserStatusEntityById(UUID id) {
     return userStatusRepository.findById(id)
         .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+  }
+
+  // [헬퍼 메서드]: userId(FK) 조회
+  private UserStatus findUserStatusEntityByUserId(UUID userId) {
+    return userStatusRepository.findByUserId(userId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_STATUS_NOT_FOUND));
+  }
+
+  // [헬퍼 메서드]: User 조회
+  private User findUserEntityById(UUID id) {
+    return userRepository.findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
   }
 }

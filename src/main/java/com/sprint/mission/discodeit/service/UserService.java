@@ -14,9 +14,9 @@ public interface UserService {
 
   UserDto findById(UUID id);
 
-  List<UserDto> findAll();
+  List<UserDto> findAllUsers();
 
-  List<User> findUsersByChannelId(UUID channelId);
+  List<User> findAllByChannelId(UUID channelId);
 
   UserDto update(UUID userId, UserUpdateRequest request, MultipartFile profile);
 

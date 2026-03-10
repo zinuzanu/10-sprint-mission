@@ -38,7 +38,7 @@ public class JCFReadStatusRepository implements ReadStatusRepository {
   }
 
   @Override
-  public List<ReadStatus> findAll() {
+  public List<ReadStatus> findAllUsers() {
     return new ArrayList<>(storage.values());
   }
 
