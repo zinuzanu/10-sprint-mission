@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.service.MessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -67,8 +68,8 @@ public class MessageController {
   public PageResponse<MessageDto> findAllByChannelId(
       @Parameter(description = "조회할 채널의 UUID", required = true)
       @RequestParam UUID channelId,
-      @Parameter(description = "다음 페이지 조회를 위한 커서 (마지막 메시지의 ID)")
-      @RequestParam(required = false) UUID cursor,
+      @Parameter(description = "다음 페이지 조회를 위한 커서 (마지막 메시지의 시간)")
+      @RequestParam(required = false) Instant cursor,
       @Parameter(description = "조회할 메시지 개수")
       @RequestParam(defaultValue = "50") int size) {
     return messageService.findAllByChannelId(channelId, cursor, size);

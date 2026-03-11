@@ -19,6 +19,7 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -69,12 +70,11 @@ public class BasicMessageService implements MessageService {
   }
 
   @Override
-  public PageResponse<MessageDto> findAllByChannelId(UUID channelId, UUID cursor, int size) {
+  public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Instant cursor, int size) {
     Channel channel = channelRepository.findById(channelId)
         .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
 
     // 1. Repository 조회 (hasNext 판단을 위해 size + 1개 요청)
-    // PageRequest.of(0, size + 1)을 사용하여 LIMIT (size + 1) 효과를 냅니다.
     Pageable limit = PageRequest.of(0, size + 1);
     List<Message> entities = (cursor == null)
         ? messageRepository.findByChannelOrderByCreatedAtDesc(channel, limit)
@@ -84,7 +84,6 @@ public class BasicMessageService implements MessageService {
     List<MessageDto> dtos = entities.stream().map(messageMapper::toDto).toList();
 
     // 3. PageResponseMapper를 통한 응답 객체 생성
-    // (작성하신 toCursorPageResponse 내부에서 hasNext와 nextCursor가 계산됩니다)
     return pageResponseMapper.toCursorPageResponse(
         dtos,
         size,

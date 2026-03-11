@@ -4,6 +4,7 @@ import com.sprint.mission.discodeit.dto.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.MessageDto;
 import com.sprint.mission.discodeit.dto.MessageUpdateRequest;
 import com.sprint.mission.discodeit.dto.response.PageResponse;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,7 +15,7 @@ public interface MessageService {
 
   MessageDto findById(UUID id);
 
-  PageResponse<MessageDto> findAllByChannelId(UUID channelId, UUID cursor, int size);
+  PageResponse<MessageDto> findAllByChannelId(UUID channelId, Instant cursor, int size);
 
   MessageDto update(UUID messageId, MessageUpdateRequest request);
 

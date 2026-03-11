@@ -117,6 +117,8 @@ public class BasicChannelService implements ChannelService {
       throw new BusinessException(ErrorCode.PRIVATE_CHANNEL_NOT_UPDATABLE);
     }
 
+    channel.update(request.getNewName(), request.getNewDescription());
+
     Instant lastMessageAt = messageRepository.findFirstByChannelOrderByCreatedAtDesc(channel)
         .map(Message::getCreatedAt)
         .orElse(null);

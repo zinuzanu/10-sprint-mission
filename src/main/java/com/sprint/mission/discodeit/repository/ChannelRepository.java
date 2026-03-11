@@ -10,7 +10,8 @@ import org.springframework.data.repository.query.Param;
 public interface ChannelRepository extends JpaRepository<Channel, UUID> {
 
   @Query("SELECT DISTINCT c FROM Channel c " +
-      "LEFT JOIN c.readStatuses rs " +
+      "LEFT JOIN FETCH c.readStatuses rs " +
+      "LEFT JOIN FETCH  rs.user u " +
       "WHERE c.type = 'PUBLIC' OR c.id IN " +
       "(SELECT rs2.channel.id FROM ReadStatus rs2 WHERE rs2.user.id = :userId)")
   List<Channel> findAllVisibleChannelsWithParticipants(@Param("userId") UUID userId);
