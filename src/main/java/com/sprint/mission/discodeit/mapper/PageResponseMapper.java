@@ -27,20 +27,32 @@ public class PageResponseMapper {
     return new PageResponse<>(finalContent, nextCursor, requestedSize, hasNext, totalElements);
   }
 
-  public <T> PageResponse<T> fromSlice(Slice<T> slice) {
+  public <T> PageResponse<T> fromSlice(Slice<T> slice, Function<T, ?> cursorExtractor) {
+    List<T> content = slice.getContent();
+
+    Object nextCursor = (slice.hasNext() && !content.isEmpty())
+        ? cursorExtractor.apply(content.get(content.size() - 1))
+        : null;
+
     return new PageResponse<>(
-        slice.getContent(),
-        slice.getNumber(),
+        content,
+        nextCursor,
         slice.getSize(),
         slice.hasNext(),
         null
     );
   }
 
-  public <T> PageResponse<T> fromPage(Page<T> page) {
+  public <T> PageResponse<T> fromPage(Page<T> page, Function<T, ?> cursorExtractor) {
+    List<T> content = page.getContent();
+
+    Object nextCursor = (page.hasNext() && !content.isEmpty())
+        ? cursorExtractor.apply(content.get(content.size() - 1))
+        : null;
+
     return new PageResponse<>(
-        page.getContent(),
-        page.getNumber(),
+        content,
+        nextCursor,
         page.getSize(),
         page.hasNext(),
         page.getTotalElements()

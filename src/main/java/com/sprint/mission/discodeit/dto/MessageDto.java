@@ -25,8 +25,8 @@ public class MessageDto {
   @Schema(description = "작성자 정보")
   private UserDto author;
 
-  @Schema(description = "채널 정보")
-  private ChannelDto channel;
+  @Schema(description = "채널 ID")
+  private UUID channelId;
 
   @Schema(description = "생성 시각", example = "2026-02-20T08:30:00Z")
   private Instant createdAt;

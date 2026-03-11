@@ -59,11 +59,8 @@ public class BasicMessageService implements MessageService {
         request.getContent(),
         attachmentContents
     );
-    Message saved = messageRepository.save(message);
-    MessageDto dto = messageMapper.toDto(saved);
-    dto.getChannel().setLastMessageAt(saved.getCreatedAt());
-
-    return dto;
+    Message saved = messageRepository.saveAndFlush(message);
+    return messageMapper.toDto(saved);
   }
 
   @Override
@@ -91,7 +88,7 @@ public class BasicMessageService implements MessageService {
     return pageResponseMapper.toCursorPageResponse(
         dtos,
         size,
-        MessageDto::getId,
+        MessageDto::getCreatedAt,
         messageRepository.countByChannel(channel)
     );
   }

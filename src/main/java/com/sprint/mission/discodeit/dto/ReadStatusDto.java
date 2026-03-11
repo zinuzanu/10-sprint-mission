@@ -18,11 +18,11 @@ public class ReadStatusDto {
   @Schema(description = "읽음 상태 ID", example = "r1eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
   private UUID id;
 
-  @Schema(description = "사용자 정보")
-  private UserDto user;
+  @Schema(description = "사용자 ID")
+  private UUID userId;
 
-  @Schema(description = "채널 정보")
-  private ChannelDto channel;
+  @Schema(description = "채널 ID")
+  private UUID channelId;
 
   @Schema(description = "마지막으로 읽은 시각", example = "2026-02-20T08:40:00Z")
   private Instant lastReadAt;

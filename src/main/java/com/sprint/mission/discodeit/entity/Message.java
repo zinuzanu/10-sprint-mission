@@ -3,13 +3,13 @@ package com.sprint.mission.discodeit.entity;
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import com.sprint.mission.discodeit.exception.BusinessException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,13 +34,7 @@ public class Message extends BaseUpdatableEntity {
   @JoinColumn(name = "author_id")
   private User author;
 
-  // 단순 참조 N:M 관계 (연결에 추가 속성 없음 → 연결 엔티티 미사용)
-  @ManyToMany
-  @JoinTable(
-      name = "message_attachments",
-      joinColumns = @JoinColumn(name = "message_id"),
-      inverseJoinColumns = @JoinColumn(name = "attachment_id")
-  )
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
   private List<BinaryContent> attachments;
 
   public Message(User author, Channel channel, String content, List<BinaryContent> attachments) {

@@ -6,6 +6,7 @@ import com.sprint.mission.discodeit.dto.ChannelDto;
 import com.sprint.mission.discodeit.dto.ChannelUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ChannelType;
+import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.exception.BusinessException;
@@ -16,8 +17,11 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ChannelService;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +42,7 @@ public class BasicChannelService implements ChannelService {
   public ChannelDto createPublicChannel(ChannelCreatePublicRequest request) {
     Channel newChannel = channelMapper.toEntity(request);
     Channel savedPublicChannel = channelRepository.save(newChannel);
-    return channelMapper.toDto(savedPublicChannel);
+    return channelMapper.toDto(savedPublicChannel, List.of(), null);
   }
 
   @Transactional
@@ -67,14 +71,40 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   public ChannelDto findById(UUID channelId) {
-    return channelMapper.toDto(findChannelEntityById(channelId));
+    Channel channel = findChannelEntityById(channelId);
+
+    // 단건 조회 시: 이 채널의 최신 메시지 시각을 레포지토리에서 딱 한 번 조회
+    Instant lastMessageAt = messageRepository.findFirstByChannelOrderByCreatedAtDesc(channel)
+        .map(Message::getCreatedAt)
+        .orElse(null);
+
+    return channelMapper.toDto(channel, channel.getParticipants(), lastMessageAt);
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<ChannelDto> findAllByUserId(UUID userId) {
-    return channelRepository.findAllVisibleChannelsWithParticipants(userId).stream()
-        .map(channelMapper::toDto)
+// 1. 내 채널들을 가져온다.
+    List<Channel> channels = channelRepository.findAllVisibleChannelsWithParticipants(userId);
+
+    // 2. 레포지토리에서 (채널ID, 최신시각) 묶음들을 다 가져온다.
+    List<Object[]> lastMessageData = messageRepository.findAllLastMessageAt();
+
+    // 3. 찾기 쉽게 맵으로 변환한다. (채널ID -> 시각)
+    Map<UUID, Instant> lastMessageMap = lastMessageData.stream()
+        .collect(Collectors.toMap(
+            obj -> (UUID) obj[0],
+            obj -> (Instant) obj[1],
+            (existing, replacement) -> existing // 중복 시 기존값 유지
+        ));
+
+    // 4. 매퍼한테 재료를 다 던져준다. (N+1 없음!)
+    return channels.stream()
+        .map(channel -> channelMapper.toDto(
+            channel,
+            channel.getParticipants(),
+            lastMessageMap.get(channel.getId()) // 맵에서 꺼내면 끝!
+        ))
         .toList();
   }
 
@@ -87,11 +117,11 @@ public class BasicChannelService implements ChannelService {
       throw new BusinessException(ErrorCode.PRIVATE_CHANNEL_NOT_UPDATABLE);
     }
 
-    channel.update(
-        request.getNewName(),
-        request.getNewDescription()
-    );
-    return channelMapper.toDto(channel);
+    Instant lastMessageAt = messageRepository.findFirstByChannelOrderByCreatedAtDesc(channel)
+        .map(Message::getCreatedAt)
+        .orElse(null);
+
+    return channelMapper.toDto(channel, channel.getParticipants(), lastMessageAt);
   }
 
   @Transactional

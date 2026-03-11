@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 @Mapper(uses = {BinaryContentMapper.class, UserMapper.class})
 public interface MessageMapper {
 
+  @Mapping(target = "channelId", source = "channel.id")
   MessageDto toDto(Message Entity);
 
   @Mapping(target = "id", ignore = true)

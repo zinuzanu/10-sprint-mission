@@ -15,6 +15,10 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
   Optional<Message> findFirstByChannelOrderByCreatedAtDesc(Channel channel);
 
+  // [추가]: 모든 채널의 최신 메시지 시각을 한 번의 쿼리로 가져오기 (N+1 방지용)
+  @Query("SELECT m.channel.id, MAX(m.createdAt) FROM Message m GROUP BY m.channel.id")
+  List<Object[]> findAllLastMessageAt();
+
   // 1. 커서가 없을 때 (첫 페이지 조회)
   List<Message> findByChannelOrderByCreatedAtDesc(Channel channel, Pageable pageable);
 

@@ -9,7 +9,8 @@ import org.mapstruct.Mapping;
 @Mapper(uses = {UserMapper.class, ChannelMapper.class})
 public interface ReadStatusMapper {
 
-  @Mapping(target = "channel", qualifiedByName = "toDtoWithLastMessage")
+  @Mapping(target = "userId", source = "user.id")
+  @Mapping(target = "channelId", source = "channel.id")
   ReadStatusDto toDto(ReadStatus entity);
 
   @Mapping(target = "id", ignore = true)
