@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @Tag(name = "3. 리소스 관리", description = "파일(바이너리 데이터) 조회 및 관리 API")
 @RestController
 @RequestMapping("/api/binaryContents")
@@ -47,6 +49,9 @@ public class BinaryContentController {
       @Parameter(description = "다운로드할 파일의 UUID", required = true)
       @PathVariable("binaryContentId") UUID binaryContentId) {
     BinaryContentDto dto = binaryContentService.findById(binaryContentId);
+
+    log.info("[BINARY_CONTENT_DOWNLOAD] 파일 다운로드 요청: id={}", binaryContentId);
+
     return binaryContentStorage.download(dto);
   }
 }

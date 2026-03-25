@@ -20,10 +20,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -53,6 +55,9 @@ public class BasicUserService implements UserService {
     newUser.setUserStatus(status);
 
     User saved = userRepository.save(newUser);
+
+    log.info("[USER_CREATE_SUCCESS] 새로운 사용자 저장 완료: id={}, email={}", saved.getId(),
+        saved.getEmail());
 
     return userMapper.toDto(saved);
   }
@@ -98,6 +103,8 @@ public class BasicUserService implements UserService {
         newProfile
     );
 
+    log.info("[USER_UPDATE_SUCCESS] 사용자 정보 수정 완료: id={}, email={}", userId, user.getEmail());
+
     return userMapper.toDto(user);
   }
 
@@ -113,6 +120,8 @@ public class BasicUserService implements UserService {
     if (user.getProfile() != null) {
       binaryContentRepository.delete(user.getProfile());
     }
+
+    log.info("[USER_DELETE_SUCCESS] 사용자 삭제 완료: id={}", userId);
   }
 
   // 이메일 중복 시 예외를 던져 가입 중단 (Fail-Fast)

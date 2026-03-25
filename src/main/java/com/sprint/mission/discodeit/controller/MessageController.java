@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Tag(name = "2. 채팅 관리", description = "채널 내 메시지 전송, 수정, 삭제 및 조회 API")
 @RestController
 @RequestMapping("/api/messages")
@@ -42,6 +44,10 @@ public class MessageController {
       @RequestPart("messageCreateRequest") MessageCreateRequest request,
       @Parameter(description = "첨부할 파일 리스트 (이미지, 문서 등)", example = "image.png")
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
+
+    log.info("[MESSAGE_CREATE] 메시지 생성 요청: authorId={}, channelId={}, attachments={}"
+        , request.getAuthorId(), request.getChannelId(), attachments);
+
     return messageService.create(request, attachments);
   }
 
@@ -51,6 +57,9 @@ public class MessageController {
       @Parameter(description = "수정할 메시지의 UUID", required = true)
       @PathVariable UUID messageId,
       @RequestBody MessageUpdateRequest request) {
+
+    log.info("[MESSAGE_UPDATE] 메시지 수정 요청: id={}", messageId);
+
     return messageService.update(messageId, request);
   }
 
@@ -60,6 +69,9 @@ public class MessageController {
   public void delete(
       @Parameter(description = "삭제할 메시지의 UUID", required = true)
       @PathVariable UUID messageId) {
+
+    log.info("[MESSAGE_DELETE] 메시지 삭제 요청: id={}", messageId);
+
     messageService.delete(messageId);
   }
 

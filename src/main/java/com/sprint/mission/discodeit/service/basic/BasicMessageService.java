@@ -24,12 +24,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -61,6 +63,10 @@ public class BasicMessageService implements MessageService {
         attachmentContents
     );
     Message saved = messageRepository.saveAndFlush(message);
+
+    log.info("[MESSAGE_CREATE_SUCCESS] 메시지 저장 완료: id={}, channelId={}",
+        saved.getId(), channel.getId());
+
     return messageMapper.toDto(saved);
   }
 
@@ -98,6 +104,9 @@ public class BasicMessageService implements MessageService {
     Message message = findMessageEntityById(messageId);
 
     message.update(request.getNewContent());
+
+    log.info("[MESSAGE_UPDATE_SUCCESS] 메시지 수정 완료: id={}", messageId);
+
     return messageMapper.toDto(message);
   }
 
@@ -107,6 +116,8 @@ public class BasicMessageService implements MessageService {
     Message message = findMessageEntityById(messageId);
 
     messageRepository.delete(message);
+
+    log.info("[MESSAGE_DELETE_SUCCESS] 메시지 삭제 완료: id={}", messageId);
   }
 
   // [헬퍼 메서드]: 첨부 파일 처리

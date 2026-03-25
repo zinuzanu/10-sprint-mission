@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Tag(name = "1. 사용자 및 인증 그룹", description = "사용자 계정 생성, 수정, 삭제 및 상태 관리 API")
 @RestController
 @RequestMapping("/api/users")
@@ -44,6 +46,10 @@ public class UserController {
       @RequestPart("userCreateRequest") UserCreateRequest request,
       @Parameter(description = "유저 프로필 이미지 파일 (선택 사항)")
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
+
+    log.info("[USER_CREATE] 사용자 등록 요청: email={}, name={}", request.getEmail(),
+        request.getUsername());
+
     return userService.create(request, profile);
   }
 
@@ -55,6 +61,9 @@ public class UserController {
       @RequestPart("userUpdateRequest") UserUpdateRequest request,
       @Parameter(description = "새로운 프로필 이미지 파일 (선택 사항)")
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
+
+    log.info("[USER_UPDATE] 사용자 정보 수정 요청: id={}", userId);
+
     return userService.update(userId, request, profile);
   }
 
@@ -64,6 +73,9 @@ public class UserController {
   public void delete(
       @Parameter(description = "삭제할 유저의 UUID", required = true)
       @PathVariable UUID userId) {
+
+    log.info("[USER_DELETE] 사용자 삭제 요청: id={}", userId);
+
     userService.delete(userId);
   }
 
@@ -79,6 +91,9 @@ public class UserController {
       @Parameter(description = "상태를 변경할 유저의 UUID", required = true)
       @PathVariable UUID userId,
       @RequestBody UserStatusUpdateRequest request) {
+
+    log.info("[USER_STATUS_UPDATE] 사용자 상태 업데이트 요청: id={}", userId);
+
     return userStatusService.update(userId, request);
   }
 }

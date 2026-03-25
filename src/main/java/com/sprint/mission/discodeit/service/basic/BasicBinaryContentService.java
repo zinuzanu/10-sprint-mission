@@ -12,9 +12,11 @@ import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -30,6 +32,10 @@ public class BasicBinaryContentService implements BinaryContentService {
     BinaryContent binaryContent = binaryContentMapper.toEntity(request);
     BinaryContent saved = binaryContentRepository.save(binaryContent);
     binaryContentStorage.put(saved.getId(), request.getBytes());
+
+    log.info("[BINARY_CONTENT_CREATE_SUCCESS] 파일 업로드 완료: id={}, fileName={}, size={}",
+        saved.getId(), saved.getFileName(), saved.getSize());
+
     return binaryContentMapper.toDto(saved);
   }
 
@@ -55,6 +61,9 @@ public class BasicBinaryContentService implements BinaryContentService {
   public void delete(UUID id) {
     BinaryContent content = findBinaryContentById(id);
     binaryContentRepository.delete(content);
+
+    log.info("[BINARY_CONTENT_DELETE_SUCCESS] 파일 삭제 완료: id={}, fileName={}",
+        id, content.getFileName());
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화

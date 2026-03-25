@@ -43,3 +43,7 @@ bin/
 .discodeit/
 .env
 /uploads/
+
+# Log files
+.logs/
+*.log

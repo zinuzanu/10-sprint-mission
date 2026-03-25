@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @Tag(name = "2. 채팅 관리", description = "채널 생성, 수정, 삭제 및 조회 API")
 @RestController
 @RequestMapping("/api/channels")
@@ -31,21 +33,26 @@ public class ChannelController {
 
   private final ChannelService channelService;
 
-  // TODO: 채널 생성자 정보가 없으므로 로직 추가 예정. (채널을 누가 만들었는지 모름)
   @Operation(summary = "공개 채널 생성", description = "누구나 참여할 수 있는 공개 채널을 생성합니다. (생성자 정보 기록 로직 추가 예정)")
   @PostMapping("/public")
   @ResponseStatus(HttpStatus.CREATED)
   public ChannelDto createPublicChannel(
       @RequestBody ChannelCreatePublicRequest createPublicRequest) {
+
+    log.info("[CHANNEL_CREATE_PUBLIC] 공개 채널 생성 요청: name={}", createPublicRequest.getName());
+
     return channelService.createPublicChannel(createPublicRequest);
   }
 
-  // TODO: UUID 형식이 맞으면 비공개 채널 생성이 가능한 상태, 추후 전역 처리 시 검증 로직 추가 예정
   @Operation(summary = "비공개 채널 생성", description = "특정 사용자들만 참여하는 비공개 채널을 생성합니다.")
   @PostMapping("/private")
   @ResponseStatus(HttpStatus.CREATED)
   public ChannelDto createPrivateChannel(
       @RequestBody ChannelCreatePrivateRequest createPrivateRequest) {
+
+    log.info("[CHANNEL_CREATE_PRIVATE] 비공개 채널 생성 요청: participantIds={}",
+        createPrivateRequest.getParticipantIds());
+
     return channelService.createPrivateChannel(createPrivateRequest);
   }
 
@@ -55,6 +62,9 @@ public class ChannelController {
       @Parameter(description = "수정할 채널의 UUID", required = true)
       @PathVariable UUID channelId,
       @RequestBody ChannelUpdateRequest request) {
+
+    log.info("[CHANNEL_UPDATE] 채널 수정 요청: id={}", channelId);
+
     return channelService.update(channelId, request);
   }
 
@@ -64,6 +74,9 @@ public class ChannelController {
   public void delete(
       @Parameter(description = "삭제할 채널의 UUID", required = true)
       @PathVariable UUID channelId) {
+
+    log.info("[CHANNEL_DELETE] 채널 삭제 요청: id={}", channelId);
+
     channelService.delete(channelId);
   }
 

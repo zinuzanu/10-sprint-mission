@@ -19,4 +19,5 @@ spring:
 logging:
   level:
     root: info
+    com.sprint.mission.discodeit: info
     org.hibernate.SQL: error

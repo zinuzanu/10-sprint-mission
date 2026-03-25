@@ -31,3 +31,7 @@ springdoc:
     title: "Discodeit API Document"
     description: "실시간 채팅 서비스 Discodeit의 서버 API 명세서입니다."
     version: "1.0.0"
+
+logging:
+  level:
+    root: info
