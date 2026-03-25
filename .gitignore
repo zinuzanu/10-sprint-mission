@@ -41,4 +41,5 @@ bin/
 
 ### Custom Local Data ###
 .discodeit/
+.env
 /uploads/
