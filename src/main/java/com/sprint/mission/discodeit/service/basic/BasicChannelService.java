@@ -9,8 +9,9 @@ import com.sprint.mission.discodeit.entity.ChannelType;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.channel.PrivateChannelNotUpdatableException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ChannelMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
@@ -58,7 +59,7 @@ public class BasicChannelService implements ChannelService {
     List<User> participants = userRepository.findAllWithDetailsByIdIn(request.getParticipantIds());
 
     if (participants.size() != request.getParticipantIds().size()) {
-      throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+      throw new UserNotFoundException(request.getParticipantIds());
     }
 
     // 2. 신규 비공개 채널 생성
@@ -124,7 +125,7 @@ public class BasicChannelService implements ChannelService {
     Channel channel = findChannelEntityById(channelId);
 
     if (channel.getType() == ChannelType.PRIVATE) {
-      throw new BusinessException(ErrorCode.PRIVATE_CHANNEL_NOT_UPDATABLE);
+      throw new PrivateChannelNotUpdatableException(channelId);
     }
 
     channel.update(request.getNewName(), request.getNewDescription());
@@ -154,6 +155,6 @@ public class BasicChannelService implements ChannelService {
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
   private Channel findChannelEntityById(UUID id) {
     return channelRepository.findById(id)
-        .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> new ChannelNotFoundException(id));
   }
 }

@@ -1,8 +1,10 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
-import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.message.EmptyMessageContentException;
+import com.sprint.mission.discodeit.exception.message.MessageTooLongException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,7 +46,7 @@ public class Message extends BaseUpdatableEntity {
   public Message(User author, Channel channel, String content, List<BinaryContent> attachments) {
     super();
     if (channel == null) {
-      throw new BusinessException(ErrorCode.REQUIRED_PARAMETER_MISSING);
+      throw new DiscodeitException(ErrorCode.REQUIRED_PARAMETER_MISSING);
     }
     validateContent(content);
 
@@ -68,12 +70,12 @@ public class Message extends BaseUpdatableEntity {
 
     // null, Blank 체크
     if (content == null || content.isBlank()) {
-      throw new BusinessException(ErrorCode.EMPTY_MESSAGE_CONTENT);
+      throw new EmptyMessageContentException();
     }
 
     // 메세지 길이 체크 (1자 이상, 500자 이하)
     if (content.length() > 500) {
-      throw new BusinessException(ErrorCode.MESSAGE_TOO_LONG);
+      throw new MessageTooLongException(content.length());
     }
   }
 

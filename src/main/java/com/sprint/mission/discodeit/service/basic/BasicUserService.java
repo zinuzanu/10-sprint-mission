@@ -7,8 +7,12 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.entity.UserStatus;
-import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.user.DuplicateEmailException;
+import com.sprint.mission.discodeit.exception.user.DuplicateUsernameException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.UserMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
@@ -77,7 +81,7 @@ public class BasicUserService implements UserService {
   @Override
   public List<User> findAllByChannelId(UUID channelId) {
     if (!channelRepository.existsById(channelId)) {
-      throw new BusinessException(ErrorCode.CHANNEL_NOT_FOUND);
+      throw new ChannelNotFoundException(channelId);
     }
     return readStatusRepository.findAllByChannelId(channelId).stream()
         .map(ReadStatus::getUser)
@@ -127,21 +131,21 @@ public class BasicUserService implements UserService {
   // 이메일 중복 시 예외를 던져 가입 중단 (Fail-Fast)
   private void validateDuplicateEmail(String userEmail) {
     if (userRepository.findByEmail(userEmail).isPresent()) {
-      throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+      throw new DuplicateEmailException(userEmail);
     }
   }
 
   // 이름 중복 시 예외를 던져 가입 중단 (Fail-Fast)
   private void validateDuplicateUserName(String username) {
     if (userRepository.findByUsername(username).isPresent()) {
-      throw new BusinessException(ErrorCode.DUPLICATE_USERNAME);
+      throw new DuplicateUsernameException(username);
     }
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
   private User findUserEntityById(UUID id) {
     return userRepository.findWithDetailsById(id)
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        .orElseThrow(() -> new UserNotFoundException(id));
   }
 
   // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(updateLastReadAt)
@@ -166,7 +170,7 @@ public class BasicUserService implements UserService {
       binaryContentStorage.put(saved.getId(), file.getBytes());
       return saved;
     } catch (IOException e) {
-      throw new BusinessException(ErrorCode.FILE_SAVE_ERROR);
+      throw new DiscodeitException(ErrorCode.FILE_SAVE_ERROR);
     }
   }
 }

@@ -1,8 +1,9 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.user.InvalidEmailException;
+import com.sprint.mission.discodeit.exception.user.InvalidPasswordException;
+import com.sprint.mission.discodeit.exception.user.InvalidUserNameException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -84,19 +85,19 @@ public class User extends BaseUpdatableEntity {
   private void validateUsername(String username) {
     if (username == null || username.isBlank() || username.contains(" ") ||
         username.length() < 2 || username.length() > 50) {
-      throw new BusinessException(ErrorCode.INVALID_USERNAME);
+      throw new InvalidUserNameException(username);
     }
   }
 
   private void validateEmail(String email) {
     if (email == null || email.isBlank() || email.contains(" ") || email.length() > 100) {
-      throw new BusinessException(ErrorCode.INVALID_EMAIL);
+      throw new InvalidEmailException(email);
     }
   }
 
   private void validatePassword(String password) {
     if (password == null || password.length() < 8 || password.contains(" ")) {
-      throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+      throw new InvalidPasswordException();
     }
   }
 

@@ -8,8 +8,11 @@ import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.MessageMapper;
 import com.sprint.mission.discodeit.mapper.PageResponseMapper;
 import com.sprint.mission.discodeit.repository.BinaryContentRepository;
@@ -50,9 +53,9 @@ public class BasicMessageService implements MessageService {
   public MessageDto create(MessageCreateRequest request,
       List<MultipartFile> attachments) {
     User author = userRepository.findById(request.getAuthorId())
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        .orElseThrow(() -> new UserNotFoundException(request.getAuthorId()));
     Channel channel = channelRepository.findById(request.getChannelId())
-        .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> new ChannelNotFoundException(request.getChannelId()));
 
     List<BinaryContent> attachmentContents = processAttachments(attachments);
 
@@ -78,7 +81,7 @@ public class BasicMessageService implements MessageService {
   @Override
   public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Instant cursor, int size) {
     Channel channel = channelRepository.findById(channelId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> new ChannelNotFoundException(channelId));
 
     // 1. Repository 조회 (hasNext 판단을 위해 size + 1개 요청)
     Pageable limit = PageRequest.of(0, size + 1);
@@ -138,7 +141,7 @@ public class BasicMessageService implements MessageService {
         binaryContentStorage.put(saved.getId(), file.getBytes());
         results.add(saved);
       } catch (IOException e) {
-        throw new BusinessException(ErrorCode.FILE_SAVE_ERROR);
+        throw new DiscodeitException(ErrorCode.FILE_SAVE_ERROR);
       }
     }
     return results;
@@ -147,6 +150,6 @@ public class BasicMessageService implements MessageService {
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
   private Message findMessageEntityById(UUID id) {
     return messageRepository.findWithAuthorAndAttachmentsById(id)
-        .orElseThrow(() -> new BusinessException(ErrorCode.MESSAGE_NOT_FOUND));
+        .orElseThrow(() -> new MessageNotFoundException(id));
   }
 }

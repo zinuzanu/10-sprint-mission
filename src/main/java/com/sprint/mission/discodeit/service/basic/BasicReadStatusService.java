@@ -6,8 +6,10 @@ import com.sprint.mission.discodeit.dto.ReadStatusUpdateRequest;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.exception.BusinessException;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
 import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
@@ -78,18 +80,18 @@ public class BasicReadStatusService implements ReadStatusService {
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
   private ReadStatus findReadStatusEntityById(UUID id) {
     return readStatusRepository.findById(id)
-        .orElseThrow(() -> new BusinessException(ErrorCode.READ_STATUS_NOT_FOUND));
+        .orElseThrow(() -> new DiscodeitException(ErrorCode.READ_STATUS_NOT_FOUND));
   }
 
   // [헬퍼 메서드]: 유저 ID 조회
   private User findUserEntityById(UUID id) {
     return userRepository.findById(id)
-        .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        .orElseThrow(() -> new UserNotFoundException(id));
   }
 
   // [헬퍼 메서드]: 채널 ID 조회
   private Channel findChannelEntityById(UUID id) {
     return channelRepository.findById(id)
-        .orElseThrow(() -> new BusinessException(ErrorCode.CHANNEL_NOT_FOUND));
+        .orElseThrow(() -> new ChannelNotFoundException(id));
   }
 }

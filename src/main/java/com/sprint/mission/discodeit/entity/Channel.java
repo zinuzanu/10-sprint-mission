@@ -1,8 +1,7 @@
 package com.sprint.mission.discodeit.entity;
 
 import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
-import com.sprint.mission.discodeit.exception.BusinessException;
-import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.InvalidChannelNameException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -71,7 +70,7 @@ public class Channel extends BaseUpdatableEntity {
   private void validateChannel(String channelName) {
     // null, Blank 체크
     if (channelName == null || channelName.length() < 2 || channelName.length() > 100) {
-      throw new BusinessException(ErrorCode.INVALID_CHANNEL_NAME);
+      throw new InvalidChannelNameException(channelName);
     }
   }
 
