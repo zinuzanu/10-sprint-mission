@@ -1,14 +1,18 @@
 package com.sprint.mission.discodeit.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;
 
 public class AuthDto {
 
   public record LoginRequest(
       @Schema(description = "사용자 이름", example = "username")
+      @NotBlank(message = "사용자 이름은 핋수입니다.")
       String username,
+
       @Schema(description = "비밀번호", example = "password1234")
+      @NotBlank(message = "비밀번호는 필수입니다.")
       String password
   ) {
 

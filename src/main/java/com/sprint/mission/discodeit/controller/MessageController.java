@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.service.MessageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +42,7 @@ public class MessageController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @ResponseStatus(HttpStatus.CREATED)
   public MessageDto create(
-      @RequestPart("messageCreateRequest") MessageCreateRequest request,
+      @Valid @RequestPart("messageCreateRequest") MessageCreateRequest request,
       @Parameter(description = "첨부할 파일 리스트 (이미지, 문서 등)", example = "image.png")
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
 
@@ -56,7 +57,7 @@ public class MessageController {
   public MessageDto update(
       @Parameter(description = "수정할 메시지의 UUID", required = true)
       @PathVariable UUID messageId,
-      @RequestBody MessageUpdateRequest request) {
+      @Valid @RequestBody MessageUpdateRequest request) {
 
     log.info("[MESSAGE_UPDATE] 메시지 수정 요청: id={}", messageId);
 

@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.service.ReadStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,8 @@ public class ReadStatusController {
   @Operation(summary = "특정 채널 메세지 수신 정보 생성", description = "특정 채널에 대한 사용자의 메시지 수신(읽음) 정보를 생성합니다.")
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ReadStatusDto create(@RequestBody ReadStatusCreateRequest request) {
+  public ReadStatusDto create(
+      @Valid @RequestBody ReadStatusCreateRequest request) {
     return readStatusService.create(request);
   }
 
@@ -41,7 +43,7 @@ public class ReadStatusController {
   public ReadStatusDto update(
       @Parameter(description = "수정할 수신 정보의 UUID", required = true)
       @PathVariable UUID readStatusId,
-      @RequestBody ReadStatusUpdateRequest request) {
+      @Valid @RequestBody ReadStatusUpdateRequest request) {
     return readStatusService.update(readStatusId, request);
   }
 

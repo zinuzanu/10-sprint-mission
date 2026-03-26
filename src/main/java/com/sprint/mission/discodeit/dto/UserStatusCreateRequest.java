@@ -1,9 +1,12 @@
 package com.sprint.mission.discodeit.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.UUID;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
@@ -12,8 +15,10 @@ import lombok.*;
 public class UserStatusCreateRequest {
 
   @Schema(description = "사용자 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+  @NotNull(message = "사용자 ID는 필수입니다.")
   private UUID userId;
 
   @Schema(description = "마지막 온라인 시각", example = "2026-02-20T07:23:52Z")
+  @NotNull(message = "마지막 온라인 시각은 필수입니다.")
   private Instant lastOnlineAt;
 }

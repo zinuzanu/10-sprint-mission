@@ -10,6 +10,7 @@ import com.sprint.mission.discodeit.service.UserStatusService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,7 @@ public class UserController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   @ResponseStatus(HttpStatus.CREATED)
   public UserDto create(
-      @RequestPart("userCreateRequest") UserCreateRequest request,
+      @Valid @RequestPart("userCreateRequest") UserCreateRequest request,
       @Parameter(description = "유저 프로필 이미지 파일 (선택 사항)")
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
 
@@ -58,7 +59,7 @@ public class UserController {
   public UserDto update(
       @Parameter(description = "수정할 유저의 UUID", required = true)
       @PathVariable UUID userId,
-      @RequestPart("userUpdateRequest") UserUpdateRequest request,
+      @Valid @RequestPart("userUpdateRequest") UserUpdateRequest request,
       @Parameter(description = "새로운 프로필 이미지 파일 (선택 사항)")
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
 
@@ -90,7 +91,7 @@ public class UserController {
   public UserStatusDto updateUserStatusByUserId(
       @Parameter(description = "상태를 변경할 유저의 UUID", required = true)
       @PathVariable UUID userId,
-      @RequestBody UserStatusUpdateRequest request) {
+      @Valid @RequestBody UserStatusUpdateRequest request) {
 
     log.info("[USER_STATUS_UPDATE] 사용자 상태 업데이트 요청: id={}", userId);
 

@@ -8,6 +8,7 @@ import com.sprint.mission.discodeit.service.ChannelService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class ChannelController {
   @PostMapping("/public")
   @ResponseStatus(HttpStatus.CREATED)
   public ChannelDto createPublicChannel(
-      @RequestBody ChannelCreatePublicRequest createPublicRequest) {
+      @Valid @RequestBody ChannelCreatePublicRequest createPublicRequest) {
 
     log.info("[CHANNEL_CREATE_PUBLIC] 공개 채널 생성 요청: name={}", createPublicRequest.getName());
 
@@ -48,7 +49,7 @@ public class ChannelController {
   @PostMapping("/private")
   @ResponseStatus(HttpStatus.CREATED)
   public ChannelDto createPrivateChannel(
-      @RequestBody ChannelCreatePrivateRequest createPrivateRequest) {
+      @Valid @RequestBody ChannelCreatePrivateRequest createPrivateRequest) {
 
     log.info("[CHANNEL_CREATE_PRIVATE] 비공개 채널 생성 요청: participantIds={}",
         createPrivateRequest.getParticipantIds());
@@ -61,7 +62,7 @@ public class ChannelController {
   public ChannelDto update(
       @Parameter(description = "수정할 채널의 UUID", required = true)
       @PathVariable UUID channelId,
-      @RequestBody ChannelUpdateRequest request) {
+      @Valid @RequestBody ChannelUpdateRequest request) {
 
     log.info("[CHANNEL_UPDATE] 채널 수정 요청: id={}", channelId);
 
