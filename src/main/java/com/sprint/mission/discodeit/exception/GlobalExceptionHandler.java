@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
 
     ErrorCode errorCode = e.getErrorCode();
 
-    log.error("[DiscodeitException] Path={}, Code={}, Message={}, Details={}",
+    log.warn("[DiscodeitException] Path={}, Code={}, Message={}, Details={}",
         request.getRequestURI(), errorCode.getCode(), e.getMessage(), e.getDetails());
 
     return buildResponse(
@@ -61,18 +61,35 @@ public class GlobalExceptionHandler {
     );
   }
 
-  @ExceptionHandler({RuntimeException.class, Exception.class})
+  @ExceptionHandler(RuntimeException.class)
   public ResponseEntity<ErrorResponseDto> handleRuntimeException(RuntimeException e,
       HttpServletRequest request) {
 
-    log.error("[Unhandled Exception] ", e);
-
-    ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
+    log.error("[Runtime Exception] Path={}, Message={}",
+        request.getRequestURI(), e.getMessage(), e);
 
     return buildResponse(
-        errorCode.getStatus(),
-        errorCode.getCode(),
-        e.getMessage() != null ? e.getMessage() : errorCode.getMessage(),
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "RUNTIME_ERROR",
+        e.getMessage() != null ? e.getMessage() : "서버 실행 중 오류가 발생했습니다.",
+        null,
+        e.getClass().getSimpleName(),
+        Instant.now(),
+        request
+    );
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ErrorResponseDto> handleException(Exception e,
+      HttpServletRequest request) {
+
+    log.error("[System Exception] Path={}, Message={}",
+        request.getRequestURI(), e.getMessage(), e);
+
+    return buildResponse(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        "SYSTEM_ERROR",
+        "시스템 내부 오류가 발생했습니다.",
         null,
         e.getClass().getSimpleName(),
         Instant.now(),
