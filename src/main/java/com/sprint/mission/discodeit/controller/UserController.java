@@ -48,7 +48,7 @@ public class UserController {
       @Parameter(description = "유저 프로필 이미지 파일 (선택 사항)")
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
 
-    log.info("[USER_CREATE] 사용자 등록 요청: email={}, name={}", request.getEmail(),
+    log.info("[REQUEST] Create User: email={}, name={}", request.getEmail(),
         request.getUsername());
 
     return userService.create(request, profile);
@@ -63,7 +63,7 @@ public class UserController {
       @Parameter(description = "새로운 프로필 이미지 파일 (선택 사항)")
       @RequestPart(value = "profile", required = false) MultipartFile profile) {
 
-    log.info("[USER_UPDATE] 사용자 정보 수정 요청: id={}", userId);
+    log.info("[REQUEST] Update User: id={}", userId);
 
     return userService.update(userId, request, profile);
   }
@@ -75,7 +75,7 @@ public class UserController {
       @Parameter(description = "삭제할 유저의 UUID", required = true)
       @PathVariable UUID userId) {
 
-    log.info("[USER_DELETE] 사용자 삭제 요청: id={}", userId);
+    log.info("[REQUEST] Delete User: id={}", userId);
 
     userService.delete(userId);
   }
@@ -93,7 +93,7 @@ public class UserController {
       @PathVariable UUID userId,
       @Valid @RequestBody UserStatusUpdateRequest request) {
 
-    log.info("[USER_STATUS_UPDATE] 사용자 상태 업데이트 요청: id={}", userId);
+    log.info("[REQUEST] Update User Status: id={}", userId);
 
     return userStatusService.update(userId, request);
   }

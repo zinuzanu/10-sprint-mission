@@ -46,7 +46,7 @@ public class BasicChannelService implements ChannelService {
     Channel newChannel = channelMapper.toEntity(request);
     Channel savedPublicChannel = channelRepository.save(newChannel);
 
-    log.info("[CHANNEL_CREATE_PUBLIC_SUCCESS] 공개 채널 저장 완료: id={}, name={}",
+    log.info("[SUCCESS] Created Public Channel: id={}, name={}",
         savedPublicChannel.getId(), newChannel.getName());
 
     return channelMapper.toDto(savedPublicChannel, List.of(), null);
@@ -74,7 +74,7 @@ public class BasicChannelService implements ChannelService {
     // 4. 저장 및 DTO 변환 (ChannelMapper가 UserMapper를 통해 완전한 UserDto를 생성)
     Channel savedChannel = channelRepository.save(newChannel);
 
-    log.info("[CHANNEL_CREATE_PRIVATE_SUCCESS] 비공개 채널 저장 완료: id={}, participantCount={}",
+    log.info("[SUCCESS] Created Private Channel: id={}, participantCount={}",
         savedChannel.getId(), participants.size());
 
     return channelMapper.toDto(savedChannel, participants, null);
@@ -134,7 +134,7 @@ public class BasicChannelService implements ChannelService {
         .map(Message::getCreatedAt)
         .orElse(null);
 
-    log.info("[CHANNEL_UPDATE_SUCCESS] 채널 정보 수정 완료: id={}", channelId);
+    log.info("[SUCCESS] Updated Channel: id={}", channelId);
 
     return channelMapper.toDto(channel, channel.getParticipants(), lastMessageAt);
   }
@@ -149,7 +149,7 @@ public class BasicChannelService implements ChannelService {
 
     channelRepository.delete(channel);
 
-    log.info("[CHANNEL_DELETE_SUCCESS] 채널 삭제 완료: id={}", channelId);
+    log.info("[SUCCESS] Deleted Channel: id={}", channelId);
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화

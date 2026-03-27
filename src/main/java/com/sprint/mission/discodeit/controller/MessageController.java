@@ -46,7 +46,7 @@ public class MessageController {
       @Parameter(description = "첨부할 파일 리스트 (이미지, 문서 등)", example = "image.png")
       @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
 
-    log.info("[MESSAGE_CREATE] 메시지 생성 요청: authorId={}, channelId={}, attachments={}"
+    log.info("[REQUEST] Create Message: authorId={}, channelId={}, attachments={}"
         , request.getAuthorId(), request.getChannelId(), attachments);
 
     return messageService.create(request, attachments);
@@ -59,7 +59,7 @@ public class MessageController {
       @PathVariable UUID messageId,
       @Valid @RequestBody MessageUpdateRequest request) {
 
-    log.info("[MESSAGE_UPDATE] 메시지 수정 요청: id={}", messageId);
+    log.info("[REQUEST] Update Message: id={}", messageId);
 
     return messageService.update(messageId, request);
   }
@@ -71,7 +71,7 @@ public class MessageController {
       @Parameter(description = "삭제할 메시지의 UUID", required = true)
       @PathVariable UUID messageId) {
 
-    log.info("[MESSAGE_DELETE] 메시지 삭제 요청: id={}", messageId);
+    log.info("[REQUEST] Delete Message: id={}", messageId);
 
     messageService.delete(messageId);
   }

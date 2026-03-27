@@ -40,7 +40,7 @@ public class ChannelController {
   public ChannelDto createPublicChannel(
       @Valid @RequestBody ChannelCreatePublicRequest createPublicRequest) {
 
-    log.info("[CHANNEL_CREATE_PUBLIC] 공개 채널 생성 요청: name={}", createPublicRequest.getName());
+    log.info("[REQUEST] Create Public Channel: name={}", createPublicRequest.getName());
 
     return channelService.createPublicChannel(createPublicRequest);
   }
@@ -51,7 +51,7 @@ public class ChannelController {
   public ChannelDto createPrivateChannel(
       @Valid @RequestBody ChannelCreatePrivateRequest createPrivateRequest) {
 
-    log.info("[CHANNEL_CREATE_PRIVATE] 비공개 채널 생성 요청: participantIds={}",
+    log.info("[REQUEST] Create Private Channel: participantIds={}",
         createPrivateRequest.getParticipantIds());
 
     return channelService.createPrivateChannel(createPrivateRequest);
@@ -64,7 +64,7 @@ public class ChannelController {
       @PathVariable UUID channelId,
       @Valid @RequestBody ChannelUpdateRequest request) {
 
-    log.info("[CHANNEL_UPDATE] 채널 수정 요청: id={}", channelId);
+    log.info("[REQUEST] Update Channel: id={}", channelId);
 
     return channelService.update(channelId, request);
   }
@@ -76,7 +76,7 @@ public class ChannelController {
       @Parameter(description = "삭제할 채널의 UUID", required = true)
       @PathVariable UUID channelId) {
 
-    log.info("[CHANNEL_DELETE] 채널 삭제 요청: id={}", channelId);
+    log.info("[REQUEST] Delete Channel: id={}", channelId);
 
     channelService.delete(channelId);
   }

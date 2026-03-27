@@ -67,7 +67,7 @@ public class BasicMessageService implements MessageService {
     );
     Message saved = messageRepository.saveAndFlush(message);
 
-    log.info("[MESSAGE_CREATE_SUCCESS] 메시지 저장 완료: id={}, channelId={}",
+    log.info("[SUCCESS] Created Message: id={}, channelId={}",
         saved.getId(), channel.getId());
 
     return messageMapper.toDto(saved);
@@ -108,7 +108,7 @@ public class BasicMessageService implements MessageService {
 
     message.update(request.getNewContent());
 
-    log.info("[MESSAGE_UPDATE_SUCCESS] 메시지 수정 완료: id={}", messageId);
+    log.info("[SUCCESS] Updated Message: id={}", messageId);
 
     return messageMapper.toDto(message);
   }
@@ -120,7 +120,7 @@ public class BasicMessageService implements MessageService {
 
     messageRepository.delete(message);
 
-    log.info("[MESSAGE_DELETE_SUCCESS] 메시지 삭제 완료: id={}", messageId);
+    log.info("[SUCCESS] Deleted Message: id={}", messageId);
   }
 
   // [헬퍼 메서드]: 첨부 파일 처리

@@ -32,7 +32,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     BinaryContent saved = binaryContentRepository.save(binaryContent);
     binaryContentStorage.put(saved.getId(), request.getBytes());
 
-    log.info("[BINARY_CONTENT_CREATE_SUCCESS] 파일 업로드 완료: id={}, fileName={}, size={}",
+    log.info("[SUCCESS] Uploaded Binary Content: id={}, fileName={}, size={}",
         saved.getId(), saved.getFileName(), saved.getSize());
 
     return binaryContentMapper.toDto(saved);
@@ -61,7 +61,7 @@ public class BasicBinaryContentService implements BinaryContentService {
     BinaryContent content = findBinaryContentById(id);
     binaryContentRepository.delete(content);
 
-    log.info("[BINARY_CONTENT_DELETE_SUCCESS] 파일 삭제 완료: id={}, fileName={}",
+    log.info("[SUCCESS] Delete Binary Content: id={}, fileName={}",
         id, content.getFileName());
   }
 

@@ -5,9 +5,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -44,16 +46,20 @@ public class GlobalExceptionHandler {
     log.warn("[Method Argument Not Valid Exception] Path={}, Message={}",
         request.getRequestURI(), e.getMessage());
 
+    String errorMessage = e.getBindingResult().getFieldErrors().stream()
+        .map(FieldError::getDefaultMessage)
+        .collect(Collectors.joining(", "));
+
     Map<String, Object> details = new HashMap<>();
     e.getBindingResult().getFieldErrors().forEach(error ->
-        details.put(error.getField(), error.getDefaultMessage()));
+        details.put(error.getField(), error.getRejectedValue()));
 
     ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
 
     return buildResponse(
         HttpStatus.BAD_REQUEST,
         errorCode.getCode(),
-        "입력 값이 올바르지 않습니다.",
+        errorMessage,
         details,
         e.getClass().getSimpleName(),
         Instant.now(),
@@ -71,7 +77,7 @@ public class GlobalExceptionHandler {
     return buildResponse(
         HttpStatus.INTERNAL_SERVER_ERROR,
         "RUNTIME_ERROR",
-        e.getMessage() != null ? e.getMessage() : "서버 실행 중 오류가 발생했습니다.",
+        "서버 실행 중 오류가 발생했습니다.",
         null,
         e.getClass().getSimpleName(),
         Instant.now(),

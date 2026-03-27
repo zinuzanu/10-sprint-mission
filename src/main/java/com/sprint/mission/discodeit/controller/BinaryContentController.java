@@ -50,7 +50,7 @@ public class BinaryContentController {
       @PathVariable("binaryContentId") UUID binaryContentId) {
     BinaryContentDto dto = binaryContentService.findById(binaryContentId);
 
-    log.info("[BINARY_CONTENT_DOWNLOAD] 파일 다운로드 요청: id={}", binaryContentId);
+    log.info("[REQUEST] Download Binary Content: id={}", binaryContentId);
 
     return binaryContentStorage.download(dto);
   }
