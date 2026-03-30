@@ -5,10 +5,10 @@ CREATE TYPE channel_type AS ENUM ('PUBLIC', 'PRIVATE');
 CREATE TABLE binary_contents
 (
     id           UUID PRIMARY KEY,
-    created_at   TIMESTAMPTZ  NOT NULL,
-    file_name    VARCHAR(255) NOT NULL,
-    size         BIGINT       NOT NULL,
-    content_type VARCHAR(100) NOT NULL,
+    created_at   TIMESTAMP WITH TIME ZONE NOT NULL,
+    file_name    VARCHAR(255)             NOT NULL,
+    size         BIGINT                   NOT NULL,
+    content_type VARCHAR(100)             NOT NULL,
     bytes        BYTEA
 );
 
@@ -16,11 +16,11 @@ CREATE TABLE binary_contents
 CREATE TABLE users
 (
     id         UUID PRIMARY KEY,
-    created_at TIMESTAMPTZ  NOT NULL,
-    updated_at TIMESTAMPTZ,
-    username   VARCHAR(50)  NOT NULL UNIQUE,
-    email      VARCHAR(100) NOT NULL UNIQUE,
-    password   VARCHAR(60)  NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    username   VARCHAR(50)              NOT NULL UNIQUE,
+    email      VARCHAR(100)             NOT NULL UNIQUE,
+    password   VARCHAR(60)              NOT NULL,
     profile_id UUID,
 
     CONSTRAINT fk_users_profile
@@ -33,10 +33,10 @@ CREATE TABLE users
 CREATE TABLE user_statuses
 (
     id             UUID PRIMARY KEY,
-    created_at     TIMESTAMPTZ NOT NULL,
-    updated_at     TIMESTAMPTZ,
-    user_id        UUID        NOT NULL UNIQUE,
-    last_active_at TIMESTAMPTZ NOT NULL,
+    created_at     TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at     TIMESTAMP WITH TIME ZONE,
+    user_id        UUID                     NOT NULL UNIQUE,
+    last_active_at TIMESTAMP WITH TIME ZONE NOT NULL,
 
     CONSTRAINT fk_user_statuses_user
         FOREIGN KEY (user_id)
@@ -48,22 +48,22 @@ CREATE TABLE user_statuses
 CREATE TABLE channels
 (
     id          UUID PRIMARY KEY,
-    created_at  TIMESTAMPTZ  NOT NULL,
-    updated_at  TIMESTAMPTZ,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at  TIMESTAMP WITH TIME ZONE,
     name        VARCHAR(100),
     description VARCHAR(500),
-    type        channel_type NOT NULL
+    type        channel_type             NOT NULL
 );
 
 -- 읽음 상태 테이블
 CREATE TABLE read_statuses
 (
-    id           UUID PRIMARY KEY,
-    created_at   TIMESTAMPTZ NOT NULL,
-    updated_at   TIMESTAMPTZ,
-    user_id      UUID        NOT NULL,
-    channel_id   UUID        NOT NULL,
-    last_read_at TIMESTAMPTZ NOT NULL,
+    id             UUID PRIMARY KEY,
+    created_at     TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at     TIMESTAMP WITH TIME ZONE,
+    user_id        UUID                     NOT NULL,
+    channel_id     UUID                     NOT NULL,
+    last_active_at TIMESTAMP WITH TIME ZONE NOT NULL,
 
     CONSTRAINT fk_read_status_user
         FOREIGN KEY (user_id)
@@ -82,10 +82,10 @@ CREATE TABLE read_statuses
 CREATE TABLE messages
 (
     id         UUID PRIMARY KEY,
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE,
     content    TEXT,
-    channel_id UUID        NOT NULL,
+    channel_id UUID                     NOT NULL,
     author_id  UUID,
 
     CONSTRAINT fk_message_channel
