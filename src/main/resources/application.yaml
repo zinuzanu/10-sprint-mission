@@ -8,7 +8,11 @@ spring:
     properties:
       hibernate:
         default_batch_fetch_size: 100
-
+  boot:
+    admin:
+      client:
+        instance:
+          name: discodeit
 
 discodeit:
   storage:
