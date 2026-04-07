@@ -24,11 +24,17 @@ services:
         condition: service_healthy
     ports:
       - "8081:80"
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: prod
       PROD_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
       PROD_DB_USERNAME: ${POSTGRES_USER}
       PROD_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      AWS_S3_ACCESS_KEY: ${AWS_S3_ACCESS_KEY}
+      AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY}
+      AWS_S3_REGION: ${AWS_S3_REGION}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET}
     volumes:
       - storage_data:/app/uploads
       - repo_data:/app/.discodeit

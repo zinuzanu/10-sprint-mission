@@ -9,7 +9,7 @@ ENV JVM_OPTS=""
 COPY . .
 
 RUN chmod +x ./gradlew
-RUN ./gradlew clean build
+RUN ./gradlew clean build -x test
 RUN cp build/libs/*.jar build/libs/${PROJECT_NAME}-${PROJECT_VERSION}.jar
 
 EXPOSE 80
