@@ -89,7 +89,7 @@ class MessageRepositoryTest {
     Message oldest = messageRepository.save(new Message(testUser, testChannel, "가장 오래된 메시지", null));
     messageRepository.flush();
 
-    Instant cursor = oldest.getCreatedAt().minusSeconds(1);
+    Instant cursor = oldest.getCreatedAt();
     PageRequest pageable = PageRequest.of(0, 5);
 
     // when
