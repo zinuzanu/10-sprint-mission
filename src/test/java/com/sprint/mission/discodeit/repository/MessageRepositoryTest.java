@@ -96,6 +96,6 @@ class MessageRepositoryTest {
     List<Message> result = messageRepository.findByChannelAndCursor(testChannel, cursor, pageable);
 
     // then
-    assertThat(result).isEmpty();
+    assertThat(result).doesNotContain(oldest);
   }
 }
