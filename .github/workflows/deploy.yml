@@ -27,6 +27,16 @@ jobs:
         with:
           registry-type: public
 
+      # 2-1. 테스트 실행 및 Jacoco 리포트 생성
+      - name: Run tests with Jacoco
+        run: ./gradlew test jacocoTestReport
+
+      # 2-2. Codecov로 리포트 업로드
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       # 3. Docker 이미지 빌드 및 푸시
       - name: Build, tag, and push docker image to Amazon ECR
         env:
