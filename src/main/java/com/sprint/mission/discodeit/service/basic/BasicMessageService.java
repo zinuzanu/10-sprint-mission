@@ -1,105 +1,155 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.MessageCreateRequest;
+import com.sprint.mission.discodeit.dto.MessageDto;
+import com.sprint.mission.discodeit.dto.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
+import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.message.MessageNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.mapper.MessageMapper;
+import com.sprint.mission.discodeit.mapper.PageResponseMapper;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.MessageRepository;
-import com.sprint.mission.discodeit.service.ChannelService;
+import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.MessageService;
-import com.sprint.mission.discodeit.service.UserService;
-
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicMessageService implements MessageService {
-    private final MessageRepository messageRepository;
 
-    private final UserService userService;
-    private final ChannelService channelService;
+  private final MessageRepository messageRepository;
+  private final ChannelRepository channelRepository;
+  private final UserRepository userRepository;
+  private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentStorage binaryContentStorage;
+  private final MessageMapper messageMapper;
+  private final PageResponseMapper pageResponseMapper;
 
-    public BasicMessageService(MessageRepository messageRepository, UserService userService, ChannelService channelService) {
-        this.messageRepository = messageRepository;
-        this.userService = userService;
-        this.channelService = channelService;
+  @Transactional
+  @Override
+  public MessageDto create(MessageCreateRequest request,
+      List<MultipartFile> attachments) {
+    User author = userRepository.findById(request.getAuthorId())
+        .orElseThrow(() -> new UserNotFoundException(request.getAuthorId()));
+    Channel channel = channelRepository.findById(request.getChannelId())
+        .orElseThrow(() -> new ChannelNotFoundException(request.getChannelId()));
+
+    List<BinaryContent> attachmentContents = processAttachments(attachments);
+
+    Message message = new Message(
+        author,
+        channel,
+        request.getContent(),
+        attachmentContents
+    );
+    Message saved = messageRepository.saveAndFlush(message);
+
+    log.info("[SUCCESS] Created Message: id={}, channelId={}",
+        saved.getId(), channel.getId());
+
+    return messageMapper.toDto(saved);
+  }
+
+  @Override
+  public MessageDto findById(UUID id) {
+    return messageMapper.toDto(findMessageEntityById(id));
+  }
+
+  @Override
+  public PageResponse<MessageDto> findAllByChannelId(UUID channelId, Instant cursor, int size) {
+    Channel channel = channelRepository.findById(channelId)
+        .orElseThrow(() -> new ChannelNotFoundException(channelId));
+
+    // 1. Repository 조회 (hasNext 판단을 위해 size + 1개 요청)
+    Pageable limit = PageRequest.of(0, size + 1);
+    List<Message> entities = (cursor == null)
+        ? messageRepository.findByChannelOrderByCreatedAtDesc(channel, limit)
+        : messageRepository.findByChannelAndCursor(channel, cursor, limit);
+
+    // 2. DTO 변환
+    List<MessageDto> dtos = entities.stream().map(messageMapper::toDto).toList();
+
+    // 3. PageResponseMapper를 통한 응답 객체 생성
+    return pageResponseMapper.toCursorPageResponse(
+        dtos,
+        size,
+        MessageDto::getCreatedAt,
+        messageRepository.countByChannel(channel)
+    );
+  }
+
+  @Transactional
+  @Override
+  public MessageDto update(UUID messageId, MessageUpdateRequest request) {
+    Message message = findMessageEntityById(messageId);
+
+    message.update(request.getNewContent());
+
+    log.info("[SUCCESS] Updated Message: id={}", messageId);
+
+    return messageMapper.toDto(message);
+  }
+
+  @Transactional
+  @Override
+  public void delete(UUID messageId) {
+    Message message = findMessageEntityById(messageId);
+
+    messageRepository.delete(message);
+
+    log.info("[SUCCESS] Deleted Message: id={}", messageId);
+  }
+
+  // [헬퍼 메서드]: 첨부 파일 처리
+  private List<BinaryContent> processAttachments(List<MultipartFile> attachments) {
+    List<BinaryContent> results = new ArrayList<>();
+    if (attachments == null || attachments.isEmpty()) {
+      return results;
     }
 
-    @Override
-    public void save(Message message) {
-        messageRepository.save(message);
+    for (MultipartFile file : attachments) {
+      try {
+        BinaryContent content = new BinaryContent(
+            file.getOriginalFilename(),
+            file.getSize(),
+            file.getContentType()
+        );
+        BinaryContent saved = binaryContentRepository.save(content);
+        binaryContentStorage.put(saved.getId(), file.getBytes());
+        results.add(saved);
+      } catch (IOException e) {
+        throw new DiscodeitException(ErrorCode.FILE_SAVE_ERROR);
+      }
     }
+    return results;
+  }
 
-    @Override
-    public Message create(UUID userId, UUID channelId, String content) {
-        User user = userService.findById(userId);
-        Channel channel = channelService.findById(channelId);
-
-        if (!channel.getMembers().contains(user)) {
-            throw new IllegalStateException("해당 채널에 속해 있지 않으므로 메세지를 보낼 수 없습니다.");
-        }
-
-        Message message = new Message(user, channel, content);
-        Message savedMessage = messageRepository.save(message);
-
-        userService.save(user);
-        channelService.save(channel);
-
-        return savedMessage;
-    }
-
-    @Override
-    public Message findById(UUID id) {
-        return messageRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 메세지 입니다. ID: " + id));
-    }
-
-    @Override
-    public List<Message> findAll() {
-        return messageRepository.findAll();
-    }
-
-    @Override
-    public List<Message> findMessagesByChannelId(UUID channelId) {
-        return channelService.findById(channelId).getMessages();
-    }
-
-    @Override
-    public List<Message> findMessagesByUserId(UUID userId) {
-        return userService.findById(userId).getMyMessages();
-    }
-
-    @Override
-    public Message update(UUID id, String content) {
-        Message updateContent = findById(id);
-        updateContent.updateMessage(content);
-        return messageRepository.save(updateContent);
-    }
-
-    @Override
-    public void deleteMessageByMessageId(UUID messageId) {
-        Message message = findById(messageId);
-        User user = message.getUser();
-        Channel channel = message.getChannel();
-        if (message.getUser() != null) {
-            message.getUser().removeMyMessages(message);
-            userService.save(user);
-        }
-        if (message.getChannel() != null) {
-            message.getChannel().removeMessages(message);
-            channelService.save(channel);
-        }
-
-        // 실제 데이터 파기
-        messageRepository.deleteById(messageId);
-    }
-
-    @Override
-    public void deleteMessagesByUserId(UUID userId) {
-        new ArrayList<> (findMessagesByUserId(userId)).forEach(m-> deleteMessageByMessageId(m.getId()));
-    }
-
-    @Override
-    public void deleteMessagesByChannelId(UUID channelId) {
-        new ArrayList<> (findMessagesByChannelId(channelId)).forEach(m-> deleteMessageByMessageId(m.getId()));
-    }
+  // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
+  private Message findMessageEntityById(UUID id) {
+    return messageRepository.findWithAuthorAndAttachmentsById(id)
+        .orElseThrow(() -> new MessageNotFoundException(id));
+  }
 }

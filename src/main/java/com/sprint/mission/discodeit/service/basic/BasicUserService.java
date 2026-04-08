@@ -1,83 +1,176 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.UserCreateRequest;
+import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.dto.UserUpdateRequest;
+import com.sprint.mission.discodeit.entity.BinaryContent;
+import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.entity.UserStatus;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.user.DuplicateEmailException;
+import com.sprint.mission.discodeit.exception.user.DuplicateUsernameException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.mapper.UserMapper;
+import com.sprint.mission.discodeit.repository.BinaryContentRepository;
+import com.sprint.mission.discodeit.repository.ChannelRepository;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.service.ChannelService;
-import com.sprint.mission.discodeit.service.MessageService;
 import com.sprint.mission.discodeit.service.UserService;
-
-import java.util.ArrayList;
+import com.sprint.mission.discodeit.storage.BinaryContentStorage;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicUserService implements UserService {
-    private final UserRepository userRepository;
 
-    private ChannelService channelService;
-    private MessageService messageService;
+  private final UserRepository userRepository;
+  private final ChannelRepository channelRepository;
+  private final BinaryContentRepository binaryContentRepository;
+  private final BinaryContentStorage binaryContentStorage;
+  private final ReadStatusRepository readStatusRepository;
+  private final UserMapper userMapper;
 
-    public BasicUserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+  @Transactional
+  @Override
+  public UserDto create(UserCreateRequest request, MultipartFile profile) {
+    validateDuplicateEmail(request.getEmail());
+    validateDuplicateUserName(request.getUsername());
+
+    BinaryContent profileImage = processImage(null, profile);
+    User newUser = userMapper.toEntity(request);
+
+    if (profileImage != null) {
+      newUser.update(null, null, null, profileImage);
     }
 
-    public void setChannelService(ChannelService channelService) {
-        this.channelService = channelService;
+    UserStatus status = new UserStatus(newUser);
+    newUser.setUserStatus(status);
+
+    User saved = userRepository.save(newUser);
+
+    log.info("[SUCCESS] User Created: id={}, email={}", saved.getId(),
+        saved.getEmail());
+
+    return userMapper.toDto(saved);
+  }
+
+  @Override
+  public UserDto findById(UUID id) {
+    return userMapper.toDto(findUserEntityById(id));
+  }
+
+  @Override
+  public List<UserDto> findAllUsers() {
+    return userRepository.findAllWithDetails().stream()
+        .map(userMapper::toDto)
+        .toList();
+  }
+
+  @Override
+  public List<User> findAllByChannelId(UUID channelId) {
+    if (!channelRepository.existsById(channelId)) {
+      throw new ChannelNotFoundException(channelId);
+    }
+    return readStatusRepository.findAllByChannelId(channelId).stream()
+        .map(ReadStatus::getUser)
+        .toList();
+  }
+
+  @Transactional
+  @Override
+  public UserDto update(UUID userId, UserUpdateRequest request,
+      MultipartFile profile) {
+    User user = findUserEntityById(userId);
+
+    if (request.getNewEmail() != null && !request.getNewEmail().equals(user.getEmail())) {
+      validateDuplicateEmail(request.getNewEmail());
     }
 
-    public void setMessageService(MessageService messageService) {
-        this.messageService = messageService;
+    BinaryContent newProfile = processImage(user.getProfile(), profile);
+
+    user.update(
+        request.getNewUsername(),
+        request.getNewEmail(),
+        request.getNewPassword(),
+        newProfile
+    );
+
+    log.info("[SUCCESS] User Updated: id={}, email={}", userId, user.getEmail());
+
+    return userMapper.toDto(user);
+  }
+
+  @Transactional
+  @Override
+  public void delete(UUID userId) {
+
+    User user = findUserEntityById(userId);
+
+    readStatusRepository.deleteByUser(user);
+    userRepository.delete(user);
+
+    if (user.getProfile() != null) {
+      binaryContentRepository.delete(user.getProfile());
     }
 
-    @Override
-    public void save(User user) {
-        userRepository.save(user);
+    log.info("[SUCCESS] User Deleted: id={}", userId);
+  }
+
+  // 이메일 중복 시 예외를 던져 가입 중단 (Fail-Fast)
+  private void validateDuplicateEmail(String userEmail) {
+    if (userRepository.findByEmail(userEmail).isPresent()) {
+      throw new DuplicateEmailException(userEmail);
+    }
+  }
+
+  // 이름 중복 시 예외를 던져 가입 중단 (Fail-Fast)
+  private void validateDuplicateUserName(String username) {
+    if (userRepository.findByUsername(username).isPresent()) {
+      throw new DuplicateUsernameException(username);
+    }
+  }
+
+  // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
+  private User findUserEntityById(UUID id) {
+    return userRepository.findWithDetailsById(id)
+        .orElseThrow(() -> new UserNotFoundException(id));
+  }
+
+  // [헬퍼 메서드]: 이미지 생성(createPublicChannel) 및 기존 이미지 수정(updateLastReadAt)
+  private BinaryContent processImage(BinaryContent existingProfile, MultipartFile file) {
+    if (file == null || file.isEmpty()) {
+      return existingProfile;
     }
 
-    @Override
-    public User create(String userName, String userEmail) {
-        validateDuplicateEmail(userEmail);
-        User newUser = new User(userName, userEmail);
-        return userRepository.save(newUser);
+    // 기존 이미지가 있으면 삭제 (Update)
+    if (existingProfile != null) {
+      binaryContentRepository.delete(existingProfile);
     }
 
-    @Override
-    public User findById(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. ID: " + id));
+    try {
+      // 새 이미지 저장
+      BinaryContent newImage = new BinaryContent(
+          file.getOriginalFilename(),
+          file.getSize(),
+          file.getContentType()
+      );
+      BinaryContent saved = binaryContentRepository.save(newImage);
+      binaryContentStorage.put(saved.getId(), file.getBytes());
+      return saved;
+    } catch (IOException e) {
+      throw new DiscodeitException(ErrorCode.FILE_SAVE_ERROR);
     }
-
-    @Override
-    public List<User> findAll() {
-        return userRepository.findAll();
-    }
-
-    @Override
-    public List<User> findMembers(UUID channelId) {
-        return channelService.findById(channelId).getMembers();
-    }
-
-    @Override
-    public User update(UUID id, String userNickname) {
-        User user = findById(id);
-        user.updateNickname(userNickname);
-        return userRepository.save(user);
-    }
-
-    @Override
-    public void deleteUserByUserId(UUID userId) {
-        User user = findById(userId);
-        messageService.deleteMessagesByUserId(userId);
-        new ArrayList<>(user.getMyChannels()).forEach(channel -> {
-            channel.removeMember(user);
-            channelService.save(channel);
-        });
-        userRepository.deleteById(userId);
-    }
-
-    // 이메일 중복 시 예외를 던져 가입 중단 (Fail-Fast)
-    private void validateDuplicateEmail(String userEmail) {
-        if (userRepository.findByEmail(userEmail).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다: " + userEmail);
-        }
-    }
+  }
 }

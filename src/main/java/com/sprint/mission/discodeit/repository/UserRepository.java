@@ -1,15 +1,31 @@
 package com.sprint.mission.discodeit.repository;
 
 import com.sprint.mission.discodeit.entity.User;
-
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface UserRepository {
-    User save(User user);
-    Optional<User> findById(UUID id);
-    Optional<User> findByEmail(String email);
-    List<User> findAll();
-    void deleteById(UUID id);
+public interface UserRepository extends JpaRepository<User, UUID> {
+
+  Optional<User> findByEmail(String email);
+
+  Optional<User> findByUsername(String username);
+
+  // 단일 상세 조회 (BasicUserService.findById 등에서 사용)
+  @EntityGraph(attributePaths = {"profile", "status"})
+  @Query("SELECT u FROM User u WHERE u.id = :id")
+  Optional<User> findWithDetailsById(@Param("id") UUID id);
+
+  // 리스트 상세 조회 (ChannelService.createPrivateChannel에서 사용)
+  @EntityGraph(attributePaths = {"profile", "status"})
+  List<User> findAllWithDetailsByIdIn(Collection<UUID> ids);
+
+  @EntityGraph(attributePaths = {"profile", "status"})
+  @Query("SELECT u FROM User u")
+  List<User> findAllWithDetails();
 }
