@@ -69,4 +69,4 @@ jobs:
           service: ${{ secrets.ECS_SERVICE }}
           cluster: ${{ secrets.ECS_CLUSTER }}
           desired-count: 1
-          wait-for-service-stability: true
+          wait-for-service-stability: false
