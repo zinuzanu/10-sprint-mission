@@ -83,19 +83,19 @@ class MessageRepositoryTest {
   }
 
   @Test
-  @DisplayName("다음 페이지 조회 실패: 커서보다 이전 시간의 데이터가 없으면 빈 리스트를 반환해야 합니다.")
-  void findByChannelAndCursor_fail() {
+  @DisplayName("페이징 조회 성공: 커서보다 이전 시간의 데이터가 없으면 빈 리스트를 반환합니다.")
+  void findByChannelAndCursor_noMoreData_returnsEmptyList() {
     // given
     Message oldest = messageRepository.save(new Message(testUser, testChannel, "가장 오래된 메시지", null));
     messageRepository.flush();
 
-    Instant cursor = oldest.getCreatedAt().minusNanos(1);
+    Instant cursor = oldest.getCreatedAt().minusSeconds(1);
     PageRequest pageable = PageRequest.of(0, 5);
 
     // when
     List<Message> result = messageRepository.findByChannelAndCursor(testChannel, cursor, pageable);
 
     // then
-    assertThat(result).doesNotContain(oldest);
+    assertThat(result).isEmpty();
   }
 }
