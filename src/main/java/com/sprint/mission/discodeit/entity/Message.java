@@ -1,53 +1,87 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.Getter;
-
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.message.EmptyMessageContentException;
+import com.sprint.mission.discodeit.exception.message.MessageTooLongException;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "messages")
 @Getter
-public class Message extends BaseEntity {
-    private static final long serialVersionUID = 1L;
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Message extends BaseUpdatableEntity {
 
-    private final UUID authorId;
-    private final UUID channelId;
-    private String content;
-    private final List<UUID> attachmentIds;
+  @Column(name = "content", columnDefinition = "TEXT")
+  private String content;
 
-    public Message(UUID authorId, UUID channelId, String content, List<UUID> attachmentIds) {
-        if (authorId == null) throw new IllegalArgumentException("유저 정보가 유효하지 않습니다.");
-        if (channelId == null) throw new IllegalArgumentException("채널 정보가 유효하지 않습니다.");
-        validateContent(content);
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "channel_id", nullable = false)
+  private Channel channel;
 
-        this.authorId = authorId;
-        this.channelId = channelId;
-        this.content = content;
-        this.attachmentIds = (attachmentIds != null) ? new ArrayList<>(attachmentIds) : new ArrayList<>();
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "author_id")
+  private User author;
+
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinTable(name = "message_attachments",
+      joinColumns = @JoinColumn(name = "message_id"),
+      inverseJoinColumns = @JoinColumn(name = "attachment_id"))
+  private List<BinaryContent> attachments;
+
+  public Message(User author, Channel channel, String content, List<BinaryContent> attachments) {
+    super();
+    if (channel == null) {
+      throw new DiscodeitException(ErrorCode.REQUIRED_PARAMETER_MISSING);
+    }
+    validateContent(content);
+
+    this.author = author;
+    this.channel = channel;
+    this.content = content;
+    this.attachments =
+        (attachments != null) ? new ArrayList<>(attachments) : new ArrayList<>();
+  }
+
+  public void update(String newContent) {
+    if (newContent != null && !newContent.equals(this.content)) {
+      validateContent(newContent);
+      this.content = newContent;
+    }
+  }
+
+  // 메세지 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
+  // newContent.length() < 1는 항상 false를 반환하므로 작성 하지 않음
+  private void validateContent(String content) {
+
+    // null, Blank 체크
+    if (content == null || content.isBlank()) {
+      throw new EmptyMessageContentException();
     }
 
-    public void update(String newContent) {
-        if (newContent != null && !newContent.equals(this.content)) {
-            validateContent(newContent);
-            this.content = newContent;
-            super.update();
-        }
+    // 메세지 길이 체크 (1자 이상, 500자 이하)
+    if (content.length() > 500) {
+      throw new MessageTooLongException(content.length());
     }
+  }
 
-    // 메세지 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
-    // content.length() < 1는 항상 false를 반환하므로 작성 하지 않음
-    private void validateContent(String content) {
-
-        // null, Blank 체크
-        if (content == null || content.isBlank()) throw new IllegalArgumentException("메세지 내용을 입력해주세요");
-
-        // 메세지 길이 체크 (1자 이상, 500자 이하)
-        if (content.length() > 500) throw new IllegalArgumentException("메세지는 1자 이상, 500자 이하로 작성해주세요.");
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Message[내용: %s, 작성자ID: %s, 채널ID: %s, 첨부 파일 수: %d, Message ID: %s]",
-                content, authorId, channelId, attachmentIds.size(), getId());
-    }
+  @Override
+  public String toString() {
+    return String.format("Message[내용: %s, 작성자ID: %s, 채널ID: %s, 첨부 파일 수: %d, Message ID: %s]",
+        content, author, channel, attachments.size(), getId());
+  }
 }

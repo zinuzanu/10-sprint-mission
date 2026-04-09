@@ -1,81 +1,97 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.ReadStatusCreateRequest;
 import com.sprint.mission.discodeit.dto.ReadStatusDto;
+import com.sprint.mission.discodeit.dto.ReadStatusUpdateRequest;
+import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
+import com.sprint.mission.discodeit.exception.user.UserNotFoundException;
+import com.sprint.mission.discodeit.mapper.ReadStatusMapper;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.service.ReadStatusService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BasicReadStatusService implements ReadStatusService {
-    private final UserRepository userRepository;
-    private final ChannelRepository channelRepository;
-    private final ReadStatusRepository readStatusRepository;
 
-    @Override
-    public ReadStatusDto.Response create(ReadStatusDto.CreateRequest request) {
-        if (!userRepository.existsById(request.userId())) throw new IllegalArgumentException("사용자가 존재하지 않습니다.");
-        if (!channelRepository.existsById(request.channelId())) throw new IllegalArgumentException("채널이 존재하지 않습니다.");
+  private final UserRepository userRepository;
+  private final ChannelRepository channelRepository;
+  private final ReadStatusRepository readStatusRepository;
+  private final ReadStatusMapper readStatusMapper;
 
-        boolean isDuplicate = readStatusRepository.findAll().stream()
-                .anyMatch(rs -> rs.getUserId().equals(request.userId()) && rs.getChannelId().equals(request.channelId()));
-        if (isDuplicate) throw new IllegalArgumentException("이미 존재하는 읽음 상태입니다.");
+  @Transactional
+  @Override
+  public ReadStatusDto create(ReadStatusCreateRequest request) {
+    ReadStatus existing = readStatusRepository
+        .findByChannelIdAndUserId(request.getChannelId(), request.getUserId())
+        .orElse(null);
 
-        ReadStatus readStatus = new ReadStatus(
-                request.userId(),
-                request.channelId(),
-                request.lastReadAt()
-        );
-
-        return convertToResponse(readStatusRepository.save(readStatus));
+    if (existing != null) {
+      existing.updateLastReadAt();
+      return readStatusMapper.toDto(existing);
     }
+    User user = findUserEntityById(request.getUserId());
+    Channel channel = findChannelEntityById(request.getChannelId());
 
-    @Override
-    public ReadStatusDto.Response findById(UUID id) {
-        return convertToResponse(findReadStatusEntityById(id));
-    }
+    ReadStatus readStatus = new ReadStatus(user, channel);
+    return readStatusMapper.toDto(readStatusRepository.save(readStatus));
 
-    @Override
-    public List<ReadStatusDto.Response> findAllByUserId(UUID userId) {
-        return readStatusRepository.findAll().stream()
-                .filter(rs -> rs.getUserId().equals(userId))
-                .map(this::convertToResponse)
-                .toList();
-    }
+  }
 
-    @Override
-    public ReadStatusDto.Response update(ReadStatusDto.UpdateRequest request) {
-        ReadStatus readStatus = findReadStatusEntityById(request.id());
-        readStatus.update(request.lastReadAt());
-        return convertToResponse(readStatusRepository.save(readStatus));
-    }
+  @Override
+  public ReadStatusDto findById(UUID id) {
+    return readStatusMapper.toDto(findReadStatusEntityById(id));
+  }
 
-    @Override
-    public void delete(UUID id) {
-        findReadStatusEntityById(id);
-        readStatusRepository.deleteById(id);
-    }
+  @Override
+  public List<ReadStatusDto> findAllByUserId(UUID userId) {
+    return readStatusRepository.findAllByUserId(userId).stream()
+        .map(readStatusMapper::toDto)
+        .toList();
+  }
 
-    // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
-    private ReadStatus findReadStatusEntityById(UUID id) {
-        return readStatusRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("읽음 상태를 찾을 수 없습니다."));
-    }
+  @Transactional
+  @Override
+  public ReadStatusDto update(UUID readStatusId, ReadStatusUpdateRequest request) {
+    ReadStatus readStatus = findReadStatusEntityById(readStatusId);
+    readStatus.updateLastReadAt();
+    return readStatusMapper.toDto(readStatus);
+  }
 
-    // [헬퍼 메서드]: 엔티티를 클라이언트 응답용 DTO로 변환 및 데이터 가공
-    private ReadStatusDto.Response convertToResponse(ReadStatus readStatus) {
-        return new ReadStatusDto.Response(
-                readStatus.getId(),
-                readStatus.getUserId(),
-                readStatus.getChannelId(),
-                readStatus.getLastReadAt()
-        );
-    }
+  @Transactional
+  @Override
+  public void delete(UUID id) {
+    ReadStatus readStatus = findReadStatusEntityById(id);
+    readStatusRepository.delete(readStatus);
+  }
+
+  // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
+  private ReadStatus findReadStatusEntityById(UUID id) {
+    return readStatusRepository.findById(id)
+        .orElseThrow(() -> new DiscodeitException(ErrorCode.READ_STATUS_NOT_FOUND));
+  }
+
+  // [헬퍼 메서드]: 유저 ID 조회
+  private User findUserEntityById(UUID id) {
+    return userRepository.findById(id)
+        .orElseThrow(() -> new UserNotFoundException(id));
+  }
+
+  // [헬퍼 메서드]: 채널 ID 조회
+  private Channel findChannelEntityById(UUID id) {
+    return channelRepository.findById(id)
+        .orElseThrow(() -> new ChannelNotFoundException(id));
+  }
 }

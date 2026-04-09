@@ -1,25 +1,57 @@
 package com.sprint.mission.discodeit.entity;
 
-import lombok.Getter;
-
+import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
-import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(
+    name = "read_statuses",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uq_user_channel",
+            columnNames = {"user_id", "channel_id"})
+    }
+)
 @Getter
-public class ReadStatus extends BaseEntity { private static final long serialVersionUID = 1L;
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ReadStatus extends BaseUpdatableEntity {
 
-    private final UUID userId;
-    private final UUID channelId;
-    private Instant lastReadAt;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    public ReadStatus(UUID userId, UUID channelId, Instant lastReadAt) {
-        this.userId = userId;
-        this.channelId = channelId;
-        this.lastReadAt = lastReadAt;
-    }
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "channel_id", nullable = false)
+  private Channel channel;
 
-    public void update(Instant lastReadAt) {
-        this.lastReadAt = Instant.now();
-        super.update();
-    }
+  @Column(name = "last_read_at", nullable = false)
+  private Instant lastReadAt;
+
+  public ReadStatus(User user, Channel channel) {
+    super();
+    this.user = user;
+    this.channel = channel;
+    this.lastReadAt = Instant.now();
+  }
+
+  public void updateLastReadAt() {
+    this.lastReadAt = Instant.now();
+  }
+
+  @Override
+  public String toString() {
+    return String.format("ReadStatus[User: %s, Channel: %s, LastRead: %s]",
+        user != null ? user.getId() : "null",
+        channel != null ? channel.getId() : "null",
+        lastReadAt);
+  }
 }

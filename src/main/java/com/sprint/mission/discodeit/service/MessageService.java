@@ -1,17 +1,23 @@
 package com.sprint.mission.discodeit.service;
 
+import com.sprint.mission.discodeit.dto.MessageCreateRequest;
 import com.sprint.mission.discodeit.dto.MessageDto;
-
+import com.sprint.mission.discodeit.dto.MessageUpdateRequest;
+import com.sprint.mission.discodeit.dto.response.PageResponse;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface MessageService {
-    MessageDto.Response create(MessageDto.CreateRequest request);
 
-    MessageDto.Response findById(UUID id);
-    List<MessageDto.Response> findAllByChannelId(UUID channelId);
+  MessageDto create(MessageCreateRequest request, List<MultipartFile> attachments);
 
-    MessageDto.Response update(MessageDto.UpdateRequest request);
+  MessageDto findById(UUID id);
 
-    void delete(UUID id);
+  PageResponse<MessageDto> findAllByChannelId(UUID channelId, Instant cursor, int size);
+
+  MessageDto update(UUID messageId, MessageUpdateRequest request);
+
+  void delete(UUID id);
 }

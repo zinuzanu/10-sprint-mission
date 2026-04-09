@@ -1,38 +1,32 @@
 package com.sprint.mission.discodeit.entity;
 
+import com.sprint.mission.discodeit.entity.base.BaseEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.Objects;
-import java.util.UUID;
-
+@Entity
+@Table(name = "binary_contents")
 @Getter
-public class BinaryContent implements Serializable {
-    private static final long serialVersionUID = 1L;
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class BinaryContent extends BaseEntity {
 
-    private final UUID id;
-    private final String fileName;
-    private final byte[] data;
-    private final Instant createdAt;
+  @Column(name = "file_name", nullable = false)
+  private String fileName;
 
-    public BinaryContent(UUID id, String fileName, byte[] data, Instant createdAt) {
-        this.id = id;
-        this.fileName = fileName;
-        this.data = data;
-        this.createdAt = Instant.now();
-    }
+  @Column(nullable = false)
+  private Long size;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BinaryContent)) return false;
-        BinaryContent that = (BinaryContent) o;
-        return Objects.equals(id, that.id);
-    }
+  @Column(name = "content_type", nullable = false, length = 100)
+  private String contentType;
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+  public BinaryContent(String fileName, Long size, String contentType) {
+    super();
+    this.fileName = fileName;
+    this.size = size;
+    this.contentType = contentType;
+  }
 }
