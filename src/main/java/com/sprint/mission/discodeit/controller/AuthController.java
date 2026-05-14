@@ -1,11 +1,14 @@
 package com.sprint.mission.discodeit.controller;
 
+import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,5 +28,16 @@ public class AuthController {
     log.debug("CSRF 토큰 요청: {}", tokenValue);
 
     return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).build();
+  }
+
+  @Operation(summary = "현재 사용자 정보 조회", description = "세션 ID를 통해 인증된 사용자의 정보를 조회합니다.")
+  @GetMapping("me")
+  public ResponseEntity<UserDto> getCurrentUser(
+      @AuthenticationPrincipal DiscodeitUserDetails discodeitUserDetails
+  ) {
+    UserDto currentUser = discodeitUserDetails.getUserDto();
+    log.debug("현재 사용자 조회 요청: {}", currentUser.getEmail());
+
+    return ResponseEntity.ok(currentUser);
   }
 }
