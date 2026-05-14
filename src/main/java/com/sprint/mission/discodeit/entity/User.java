@@ -75,6 +75,10 @@ public class User extends BaseUpdatableEntity {
     this.profile = newProfileId;
   }
 
+  public void updateEncodedPassword(String encodedPassword) {
+    this.password = encodedPassword;
+  }
+
   // 유저 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
   private void validateUser(String username, String email, String password) {
     validateUsername(username);
