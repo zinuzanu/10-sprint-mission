@@ -24,6 +24,22 @@ public class DiscodeitUserDetails implements UserDetails {
   }
 
   @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof DiscodeitUserDetails that)) {
+      return false;
+    }
+    return userDto.getEmail().equals(that.userDto.getEmail());
+  }
+
+  @Override
+  public int hashCode() {
+    return userDto.getEmail().hashCode();
+  }
+
+  @Override
   public String getPassword() {
     return this.password;
   }

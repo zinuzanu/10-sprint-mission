@@ -19,6 +19,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
@@ -44,6 +45,9 @@ public class BasicUserService implements UserService {
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
+  // 보안 및 세션 인프라 제어를 위한 서비스 주입
+  // 다른 도메인 서비스와 달리 PasswordEncoder처럼 기술적인 유틸리티 성격으로 활용
+  private final AuthService authService;
 
   @Transactional
   @Override
@@ -124,6 +128,8 @@ public class BasicUserService implements UserService {
     User user = findUserEntityById(request.getUserId());
 
     user.updateRole(request.getNewRole());
+
+    authService.expireUserSessions(user.getId());
 
     log.info("[SUCCESS] User Role Updated: id={}, newRole={}",
         user.getId(), user.getRole());
