@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service;
 
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import java.util.List;
@@ -19,6 +20,8 @@ public interface UserService {
   List<User> findAllByChannelId(UUID channelId);
 
   UserDto update(UUID userId, UserUpdateRequest request, MultipartFile profile);
+
+  UserDto updateUserRole(UserRoleUpdateRequest request);
 
   void delete(UUID id);
 }

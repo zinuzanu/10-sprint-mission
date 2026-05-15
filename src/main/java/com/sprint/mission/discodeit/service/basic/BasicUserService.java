@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.basic;
 
 import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.ReadStatus;
@@ -113,6 +114,19 @@ public class BasicUserService implements UserService {
     );
 
     log.info("[SUCCESS] User Updated: id={}, email={}", userId, user.getEmail());
+
+    return userMapper.toDto(user);
+  }
+
+  @Transactional
+  @Override
+  public UserDto updateUserRole(UserRoleUpdateRequest request) {
+    User user = findUserEntityById(request.getUserId());
+
+    user.updateRole(request.getNewRole());
+
+    log.info("[SUCCESS] User Role Updated: id={}, newRole={}",
+        user.getId(), user.getRole());
 
     return userMapper.toDto(user);
   }

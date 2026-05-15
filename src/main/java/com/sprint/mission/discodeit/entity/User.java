@@ -7,6 +7,8 @@ import com.sprint.mission.discodeit.exception.user.InvalidUserNameException;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -30,7 +32,6 @@ public class User extends BaseUpdatableEntity {
   @Column(nullable = false, length = 60)
   private String password;
 
-  // TODO: 단방향 관계이므로 고아객체 처리는 추후 binary_contents 고도화 시 적용 예정.
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "profile_id", unique = true)
   private BinaryContent profile;
@@ -41,6 +42,10 @@ public class User extends BaseUpdatableEntity {
       orphanRemoval = true
   )
   private UserStatus status;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private Role role = Role.USER;
 
   // 연관 관계 편의 메서드
   public void setUserStatus(UserStatus status) {
@@ -77,6 +82,10 @@ public class User extends BaseUpdatableEntity {
 
   public void updateEncodedPassword(String encodedPassword) {
     this.password = encodedPassword;
+  }
+
+  public void updateRole(Role role) {
+    this.role = role;
   }
 
   // 유저 생성 및 수정 시 준수해야 할 비즈니스 정책 (Fail-Fast)
