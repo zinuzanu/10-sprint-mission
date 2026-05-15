@@ -30,21 +30,6 @@ CREATE TABLE users
             ON DELETE SET NULL
 );
 
--- 유저 상태 테이블
-CREATE TABLE user_statuses
-(
-    id             UUID PRIMARY KEY,
-    created_at     TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at     TIMESTAMP WITH TIME ZONE,
-    user_id        UUID                     NOT NULL UNIQUE,
-    last_active_at TIMESTAMP WITH TIME ZONE NOT NULL,
-
-    CONSTRAINT fk_user_statuses_user
-        FOREIGN KEY (user_id)
-            REFERENCES users (id)
-            ON DELETE CASCADE
-);
-
 -- 채널 테이블
 CREATE TABLE channels
 (

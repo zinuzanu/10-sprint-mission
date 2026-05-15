@@ -7,7 +7,6 @@ import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
-import com.sprint.mission.discodeit.entity.UserStatus;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
@@ -64,9 +63,6 @@ public class BasicUserService implements UserService {
     if (profileImage != null) {
       newUser.update(null, null, null, profileImage);
     }
-
-    UserStatus status = new UserStatus(newUser);
-    newUser.setUserStatus(status);
 
     User saved = userRepository.save(newUser);
 

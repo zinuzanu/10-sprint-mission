@@ -22,15 +22,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
   boolean existsByRole(Role role);
 
   // 단일 상세 조회 (BasicUserService.findById 등에서 사용)
-  @EntityGraph(attributePaths = {"profile", "status"})
+  @EntityGraph(attributePaths = "profile")
   @Query("SELECT u FROM User u WHERE u.id = :id")
   Optional<User> findWithDetailsById(@Param("id") UUID id);
 
   // 리스트 상세 조회 (ChannelService.createPrivateChannel에서 사용)
-  @EntityGraph(attributePaths = {"profile", "status"})
+  @EntityGraph(attributePaths = "profile")
   List<User> findAllWithDetailsByIdIn(Collection<UUID> ids);
 
-  @EntityGraph(attributePaths = {"profile", "status"})
+  @EntityGraph(attributePaths = "profile")
   @Query("SELECT u FROM User u")
   List<User> findAllWithDetails();
 }

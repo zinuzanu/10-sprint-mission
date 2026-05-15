@@ -4,7 +4,6 @@ import com.sprint.mission.discodeit.entity.base.BaseUpdatableEntity;
 import com.sprint.mission.discodeit.exception.user.InvalidEmailException;
 import com.sprint.mission.discodeit.exception.user.InvalidPasswordException;
 import com.sprint.mission.discodeit.exception.user.InvalidUserNameException;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -36,21 +35,9 @@ public class User extends BaseUpdatableEntity {
   @JoinColumn(name = "profile_id", unique = true)
   private BinaryContent profile;
 
-  @OneToOne(
-      mappedBy = "user",
-      cascade = CascadeType.ALL,
-      orphanRemoval = true
-  )
-  private UserStatus status;
-
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)
   private Role role = Role.USER;
-
-  // 연관 관계 편의 메서드
-  public void setUserStatus(UserStatus status) {
-    this.status = status;
-  }
 
   public User(String username, String email, String password) {
     super();
