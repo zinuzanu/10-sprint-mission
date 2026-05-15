@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.User;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
@@ -21,6 +22,7 @@ public interface UserService {
 
   UserDto update(UUID userId, UserUpdateRequest request, MultipartFile profile);
 
+  @PreAuthorize("hasRole('ADMIN')")
   UserDto updateUserRole(UserRoleUpdateRequest request);
 
   void delete(UUID id);
