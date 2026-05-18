@@ -46,7 +46,7 @@ public class DiscodeitUserDetails implements UserDetails {
 
   @Override
   public String getUsername() {
-    return userDto.getEmail();
+    return userDto.getUsername();
   }
 
   @Override

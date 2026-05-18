@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -30,6 +31,7 @@ public class SecurityConfig {
 
   private final LoginSuccessHandler loginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
+  private final UserDetailsService userDetailsService;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http, SessionRegistry sessionRegistry)
@@ -40,11 +42,11 @@ public class SecurityConfig {
             .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
         )
         .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/error").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
             .requestMatchers("/api/auth/csrf-token").permitAll()
             .requestMatchers(
                 "/",
-                "/error",
                 "/favicon.ico",
                 "/v3/api-docs/**",
                 "/swagger-ui/**",
@@ -57,7 +59,7 @@ public class SecurityConfig {
         .sessionManagement(management -> management
             .sessionConcurrency(concurrency -> concurrency
                 .maximumSessions(1)
-                .maxSessionsPreventsLogin(true)
+                .maxSessionsPreventsLogin(false)
                 .sessionRegistry(sessionRegistry)
             )
         )
@@ -74,11 +76,16 @@ public class SecurityConfig {
             .failureHandler(loginFailureHandler)
             .permitAll()
         )
+        .rememberMe(rememberMe -> rememberMe
+            .rememberMeParameter("remember-me")
+            .tokenValiditySeconds(60 * 60 * 24 * 7)
+            .userDetailsService(userDetailsService)
+        )
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
-            .deleteCookies("JSESSIONID")
+            .deleteCookies("JSESSIONID", "remember-me")
             .invalidateHttpSession(true)
             .permitAll()
         );
