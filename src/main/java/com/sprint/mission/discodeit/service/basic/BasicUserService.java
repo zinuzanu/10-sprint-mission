@@ -80,17 +80,31 @@ public class BasicUserService implements UserService {
   @Override
   public List<UserDto> findAllUsers() {
     return userRepository.findAllWithDetails().stream()
-        .map(userMapper::toDto)
+        .map(user -> {
+          UserDto dto = userMapper.toDto(user);
+
+          return dto.toBuilder()
+              .online(authService.isUserOnline(user.getId()))
+              .build();
+        })
         .toList();
   }
 
   @Override
-  public List<User> findAllByChannelId(UUID channelId) {
+  public List<UserDto> findAllByChannelId(UUID channelId) {
     if (!channelRepository.existsById(channelId)) {
       throw new ChannelNotFoundException(channelId);
     }
+
     return readStatusRepository.findAllByChannelId(channelId).stream()
         .map(ReadStatus::getUser)
+        .map(user -> {
+          UserDto dto = userMapper.toDto(user);
+
+          return dto.toBuilder()
+              .online(authService.isUserOnline(user.getId()))
+              .build();
+        })
         .toList();
   }
 

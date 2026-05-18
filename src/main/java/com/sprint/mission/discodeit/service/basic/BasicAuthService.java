@@ -25,4 +25,12 @@ public class BasicAuthService implements AuthService {
       }
     }
   }
+
+  @Override
+  public boolean isUserOnline(UUID userId) {
+    return sessionRegistry.getAllPrincipals().stream()
+        .filter(principal -> principal instanceof DiscodeitUserDetails)
+        .map(principal -> (DiscodeitUserDetails) principal)
+        .anyMatch(userDetails -> userDetails.getUserDto().getId().equals(userId));
+  }
 }

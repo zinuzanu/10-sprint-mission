@@ -31,12 +31,12 @@ public class DiscodeitUserDetails implements UserDetails {
     if (!(o instanceof DiscodeitUserDetails that)) {
       return false;
     }
-    return userDto.getEmail().equals(that.userDto.getEmail());
+    return userDto.getId().equals(that.userDto.getId());
   }
 
   @Override
   public int hashCode() {
-    return userDto.getEmail().hashCode();
+    return userDto.getId().hashCode();
   }
 
   @Override

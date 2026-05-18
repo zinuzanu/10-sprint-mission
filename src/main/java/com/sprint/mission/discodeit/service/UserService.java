@@ -4,7 +4,6 @@ import com.sprint.mission.discodeit.dto.UserCreateRequest;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
-import com.sprint.mission.discodeit.entity.User;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,7 +17,7 @@ public interface UserService {
 
   List<UserDto> findAllUsers();
 
-  List<User> findAllByChannelId(UUID channelId);
+  List<UserDto> findAllByChannelId(UUID channelId);
 
   UserDto update(UUID userId, UserUpdateRequest request, MultipartFile profile);
 
