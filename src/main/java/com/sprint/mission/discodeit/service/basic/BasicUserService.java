@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -110,6 +111,7 @@ public class BasicUserService implements UserService {
 
   @Transactional
   @Override
+  @PreAuthorize("#userId == authentication.principal.userDto.id")
   public UserDto update(UUID userId, UserUpdateRequest request,
       MultipartFile profile) {
     User user = findUserEntityById(userId);
@@ -120,10 +122,22 @@ public class BasicUserService implements UserService {
 
     BinaryContent newProfile = processImage(user.getProfile(), profile);
 
+    String finalUsername = (request.getNewUsername() != null && !request.getNewUsername().isBlank())
+        ? request.getNewUsername().trim()
+        : user.getUsername();
+
+    String finalEmail = (request.getNewEmail() != null && !request.getNewEmail().isBlank())
+        ? request.getNewEmail().trim()
+        : user.getEmail();
+
+    String finalPassword = (request.getNewPassword() != null && !request.getNewPassword().isBlank())
+        ? passwordEncoder.encode(request.getNewPassword())
+        : user.getPassword();
+
     user.update(
-        request.getNewUsername(),
-        request.getNewEmail(),
-        request.getNewPassword(),
+        finalUsername,
+        finalEmail,
+        finalPassword,
         newProfile
     );
 
@@ -134,6 +148,7 @@ public class BasicUserService implements UserService {
 
   @Transactional
   @Override
+  @PreAuthorize("hasRole('ADMIN')")
   public UserDto updateUserRole(UserRoleUpdateRequest request) {
     User user = findUserEntityById(request.getUserId());
 
@@ -149,6 +164,7 @@ public class BasicUserService implements UserService {
 
   @Transactional
   @Override
+  @PreAuthorize("#userId == authentication.principal.userDto.id")
   public void delete(UUID userId) {
 
     User user = findUserEntityById(userId);

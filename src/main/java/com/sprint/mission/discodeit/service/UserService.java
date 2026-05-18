@@ -19,10 +19,12 @@ public interface UserService {
 
   List<UserDto> findAllByChannelId(UUID channelId);
 
+  @PreAuthorize("#root.args[0] == authentication.principal.userDto.id")
   UserDto update(UUID userId, UserUpdateRequest request, MultipartFile profile);
 
   @PreAuthorize("hasRole('ADMIN')")
   UserDto updateUserRole(UserRoleUpdateRequest request);
 
+  @PreAuthorize("#root.args[0] == authentication.principal.userDto.id")
   void delete(UUID id);
 }
