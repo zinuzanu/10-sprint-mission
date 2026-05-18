@@ -1,11 +1,12 @@
 package com.sprint.mission.discodeit.service.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sprint.mission.discodeit.dto.ErrorResponseDto;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Map;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -27,11 +28,16 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
     response.setCharacterEncoding("UTF-8");
 
-    Map<String, String> errorDetails = Map.of(
-        "message", "이메일 또는 비밀번호가 일치하지 않습니다.",
-        "code", "AUTH_FAILURE"
-    );
+    ErrorResponseDto errorResponse = ErrorResponseDto.builder()
+        .timestamp(Instant.now())
+        .status(HttpStatus.UNAUTHORIZED.value())
+        .code("A201")
+        .message("이메일 또는 비밀번호가 일치하지 않습니다.")
+        .details(null)
+        .exceptionType(exception.getClass().getSimpleName())
+        .path(request.getRequestURI())
+        .build();
 
-    response.getWriter().write(objectMapper.writeValueAsString(errorDetails));
+    response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
   }
 }
