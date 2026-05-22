@@ -1,7 +1,5 @@
-package com.sprint.mission.discodeit.config;
+package com.sprint.mission.discodeit.config.security;
 
-import com.sprint.mission.discodeit.service.auth.LoginFailureHandler;
-import com.sprint.mission.discodeit.service.auth.LoginSuccessHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

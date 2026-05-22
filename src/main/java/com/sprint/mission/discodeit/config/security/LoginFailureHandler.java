@@ -1,4 +1,4 @@
-package com.sprint.mission.discodeit.service.auth;
+package com.sprint.mission.discodeit.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.ErrorResponseDto;
