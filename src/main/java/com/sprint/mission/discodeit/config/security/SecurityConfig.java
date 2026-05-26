@@ -1,6 +1,7 @@
 package com.sprint.mission.discodeit.config.security;
 
 import com.sprint.mission.discodeit.service.auth.JwtTokenProvider;
+import com.sprint.mission.discodeit.service.auth.RefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -14,7 +15,6 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -29,7 +29,7 @@ public class SecurityConfig {
 
   private final JwtLoginSuccessHandler jwtLoginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
-  private final UserDetailsService userDetailsService;
+  private final RefreshTokenService refreshTokenService;
   private final JwtTokenProvider jwtTokenProvider;
 
   @Bean
@@ -76,8 +76,12 @@ public class SecurityConfig {
         )
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
+            .addLogoutHandler(
+                new JwtLogoutHandler(refreshTokenService)
+            )
             .logoutSuccessHandler(
-                new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
+                new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)
+            )
             .deleteCookies("REFRESH_TOKEN")
             .invalidateHttpSession(true)
             .permitAll()
