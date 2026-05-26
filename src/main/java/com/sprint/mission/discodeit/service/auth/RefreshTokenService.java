@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.service.auth;
 
 import com.sprint.mission.discodeit.entity.RefreshToken;
 import com.sprint.mission.discodeit.repository.RefreshTokenRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;

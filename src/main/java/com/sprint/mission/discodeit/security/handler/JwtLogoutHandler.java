@@ -1,6 +1,7 @@
-package com.sprint.mission.discodeit.config.security;
+package com.sprint.mission.discodeit.security.handler;
 
 import com.sprint.mission.discodeit.entity.RefreshToken;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.auth.RefreshTokenService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
