@@ -36,7 +36,9 @@ public class DiscodeitUserDetails implements UserDetails {
 
   @Override
   public int hashCode() {
-    return userDto.getId().hashCode();
+    return userDto.getId() != null
+        ? userDto.getId().hashCode()
+        : userDto.getEmail().hashCode();
   }
 
   @Override

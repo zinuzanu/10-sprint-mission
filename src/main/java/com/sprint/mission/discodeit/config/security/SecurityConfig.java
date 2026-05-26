@@ -31,6 +31,7 @@ public class SecurityConfig {
   private final LoginFailureHandler loginFailureHandler;
   private final RefreshTokenService refreshTokenService;
   private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http)
@@ -77,7 +78,7 @@ public class SecurityConfig {
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
             .addLogoutHandler(
-                new JwtLogoutHandler(refreshTokenService)
+                new JwtLogoutHandler(jwtRegistry, refreshTokenService)
             )
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)
@@ -87,7 +88,7 @@ public class SecurityConfig {
             .permitAll()
         )
         .addFilterBefore(
-            new JwtAuthenticationFilter(jwtTokenProvider),
+            new JwtAuthenticationFilter(jwtTokenProvider, jwtRegistry),
             UsernamePasswordAuthenticationFilter.class
         );
     return http.build();

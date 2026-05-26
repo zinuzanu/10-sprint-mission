@@ -2,6 +2,7 @@ package com.sprint.mission.discodeit.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.JwtDto;
+import com.sprint.mission.discodeit.dto.JwtInformation;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.auth.JwtTokenProvider;
@@ -29,6 +30,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final ObjectMapper objectMapper;
   private final JwtTokenProvider jwtTokenProvider;
   private final RefreshTokenService refreshTokenService;
+  private final JwtRegistry jwtRegistry;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -42,6 +44,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
         .toList();
 
     Map<String, Object> claims = new HashMap<>();
+    claims.put("userId", userDto.getId().toString());
     claims.put("username", email);
     claims.put("roles", roles);
 
@@ -52,6 +55,17 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
         userDto.getId(),
         refreshToken
     );
+
+    JwtInformation jwtInfo = JwtInformation.builder()
+        .userId(userDto.getId())
+        .accessToken(accessToken)
+        .refreshToken(refreshToken)
+        .expiredAt(
+            java.time.LocalDateTime.now()
+                .plusMinutes(jwtTokenProvider.getAccessTokenExpirationMinutes())
+        )
+        .build();
+    jwtRegistry.registerJwtInformation(jwtInfo);
 
     Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
     refreshTokenCookie.setHttpOnly(true);

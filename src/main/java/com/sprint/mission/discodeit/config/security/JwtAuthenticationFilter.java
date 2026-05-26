@@ -22,35 +22,52 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
+  private final JwtRegistry jwtRegistry;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request,
       HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
-    try {
-      Map<String, Object> claims = verifyJws(request);
-      setAuthenticationToContext(claims);
-    } catch (Exception e) {
-      request.setAttribute("exception", e);
+
+    String token = resolveToken(request);
+
+    if (token != null) {
+      try {
+        Map<String, Object> claims = jwtTokenProvider.getClaims(token);
+
+        if (!jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
+          throw new RuntimeException("비활성 토큰입니다.");
+        }
+
+        setAuthenticationToContext(claims);
+
+      } catch (Exception e) {
+        SecurityContextHolder.clearContext();
+        request.setAttribute("exception", e);
+      }
     }
 
     filterChain.doFilter(request, response);
   }
 
-  @Override
-  protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+  private String resolveToken(HttpServletRequest request) {
     String authorization = request.getHeader("Authorization");
-    return authorization == null || !authorization.startsWith("Bearer ");
-  }
 
-  private Map<String, Object> verifyJws(HttpServletRequest request) {
-    String jws = request.getHeader("Authorization").replace("Bearer ", "");
-    return jwtTokenProvider.getClaims(jws);
+    if (authorization != null && authorization.startsWith("Bearer ")) {
+      return authorization.substring(7);
+    }
+
+    return null;
   }
 
   private void setAuthenticationToContext(Map<String, Object> claims) {
+
     String email = (String) claims.get("sub");
     List<String> roles = (List<String>) claims.get("roles");
+
+    if (roles == null) {
+      roles = List.of();
+    }
 
     List<GrantedAuthority> authorities = new ArrayList<>();
     for (String role : roles) {
