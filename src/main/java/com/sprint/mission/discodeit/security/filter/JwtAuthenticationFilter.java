@@ -1,5 +1,7 @@
 package com.sprint.mission.discodeit.security.filter;
 
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
@@ -37,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Map<String, Object> claims = jwtTokenProvider.getClaims(token);
 
         if (!jwtRegistry.hasActiveJwtInformationByAccessToken(token)) {
-          throw new RuntimeException("비활성 토큰입니다.");
+          throw new DiscodeitException(ErrorCode.REVOKED_TOKEN);
         }
 
         setAuthenticationToContext(claims);

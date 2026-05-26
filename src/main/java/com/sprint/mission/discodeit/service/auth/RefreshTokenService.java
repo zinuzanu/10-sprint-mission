@@ -1,6 +1,8 @@
 package com.sprint.mission.discodeit.service.auth;
 
 import com.sprint.mission.discodeit.entity.RefreshToken;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.repository.RefreshTokenRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import java.time.Instant;
@@ -47,14 +49,14 @@ public class RefreshTokenService {
 
     return refreshTokenRepository.findByToken(token)
         .orElseThrow(() ->
-            new RuntimeException("유효하지 않은 리프레시 토큰입니다.")
+            new DiscodeitException(ErrorCode.REFRESH_TOKEN_NOT_FOUND)
         );
   }
 
   public void validate(RefreshToken refreshToken) {
 
     if (refreshToken.getExpiredAt().isBefore(Instant.now())) {
-      throw new RuntimeException("만료된 리프레시 토큰입니다.");
+      throw new DiscodeitException(ErrorCode.REFRESH_TOKEN_EXPIRED);
     }
   }
 
@@ -63,7 +65,7 @@ public class RefreshTokenService {
     RefreshToken refreshToken =
         refreshTokenRepository.findByUserId(userId)
             .orElseThrow(() ->
-                new RuntimeException("리프레시 토큰이 존재하지 않습니다.")
+                new DiscodeitException(ErrorCode.REFRESH_TOKEN_NOT_FOUND)
             );
 
     Instant newExpiredAt = Instant.now()

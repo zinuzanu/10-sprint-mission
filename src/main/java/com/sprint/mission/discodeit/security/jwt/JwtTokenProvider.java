@@ -8,6 +8,8 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
@@ -54,7 +56,7 @@ public class JwtTokenProvider {
       signedJWT.sign(signer);
       return signedJWT.serialize();
     } catch (Exception e) {
-      throw new RuntimeException("JWT 발급 실패", e);
+      throw new DiscodeitException(ErrorCode.INVALID_TOKEN);
     }
   }
 
@@ -80,7 +82,7 @@ public class JwtTokenProvider {
       signedJWT.sign(signer);
       return signedJWT.serialize();
     } catch (Exception e) {
-      throw new RuntimeException("JWT 발급 실패", e);
+      throw new DiscodeitException(ErrorCode.INVALID_TOKEN);
     }
   }
 
@@ -90,7 +92,7 @@ public class JwtTokenProvider {
       JWSVerifier verifier = new MACVerifier(secretKey.getBytes(StandardCharsets.UTF_8));
 
       if (!signedJWT.verify(verifier)) {
-        throw new RuntimeException("JWT 검증 실패");
+        throw new DiscodeitException(ErrorCode.INVALID_TOKEN);
       }
 
       JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
@@ -98,12 +100,14 @@ public class JwtTokenProvider {
       Date expirationTime = claimsSet.getExpirationTime();
 
       if (expirationTime.before(new Date())) {
-        throw new RuntimeException("JWT 만료");
+        throw new DiscodeitException(ErrorCode.EXPIRED_TOKEN);
       }
 
       return claimsSet.getClaims();
+    } catch (DiscodeitException e) {
+      throw e;
     } catch (Exception e) {
-      throw new RuntimeException("JWT 파싱 실패", e);
+      throw new DiscodeitException(ErrorCode.INVALID_TOKEN);
     }
   }
 }
