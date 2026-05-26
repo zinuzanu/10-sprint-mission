@@ -1,10 +1,9 @@
 package com.sprint.mission.discodeit.service;
 
-import java.util.UUID;
+import com.sprint.mission.discodeit.dto.JwtDto;
+import jakarta.servlet.http.HttpServletResponse;
 
 public interface AuthService {
 
-  void expireUserSessions(UUID userId);
-
-  boolean isUserOnline(UUID userId);
+  JwtDto refresh(String refreshToken, HttpServletResponse response);
 }

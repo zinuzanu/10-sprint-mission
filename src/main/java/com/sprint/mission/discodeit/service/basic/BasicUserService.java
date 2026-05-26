@@ -18,7 +18,6 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
-import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
@@ -45,9 +44,6 @@ public class BasicUserService implements UserService {
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
-  // 보안 및 세션 인프라 제어를 위한 서비스 주입
-  // 다른 도메인 서비스와 달리 PasswordEncoder처럼 기술적인 유틸리티 성격으로 활용
-  private final AuthService authService;
 
   @Transactional
   @Override
@@ -81,14 +77,19 @@ public class BasicUserService implements UserService {
   @Override
   public List<UserDto> findAllUsers() {
     return userRepository.findAllWithDetails().stream()
-        .map(user -> {
-          UserDto dto = userMapper.toDto(user);
-
-          return dto.toBuilder()
-              .online(authService.isUserOnline(user.getId()))
-              .build();
-        })
+        .map(userMapper::toDto)
         .toList();
+  }
+
+  @Override
+  public UserDto findByEmail(String email) {
+
+    User user = userRepository.findByEmail(email)
+        .orElseThrow(() ->
+            new RuntimeException("사용자를 찾을 수 없습니다.")
+        );
+
+    return userMapper.toDto(user);
   }
 
   @Override
@@ -99,13 +100,7 @@ public class BasicUserService implements UserService {
 
     return readStatusRepository.findAllByChannelId(channelId).stream()
         .map(ReadStatus::getUser)
-        .map(user -> {
-          UserDto dto = userMapper.toDto(user);
-
-          return dto.toBuilder()
-              .online(authService.isUserOnline(user.getId()))
-              .build();
-        })
+        .map(userMapper::toDto)
         .toList();
   }
 
@@ -153,8 +148,6 @@ public class BasicUserService implements UserService {
     User user = findUserEntityById(request.getUserId());
 
     user.updateRole(request.getNewRole());
-
-    authService.expireUserSessions(user.getId());
 
     log.info("[SUCCESS] User Role Updated: id={}, newRole={}",
         user.getId(), user.getRole());

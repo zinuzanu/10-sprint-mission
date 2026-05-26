@@ -39,6 +39,7 @@ public class JwtTokenProvider {
 
       JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
           .subject(subject)
+          .claim("username", claims.get("username"))
           .claim("roles", claims.get("roles"))
           .expirationTime(expiration)
           .issueTime(new Date())
@@ -93,6 +94,13 @@ public class JwtTokenProvider {
       }
 
       JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+
+      Date expirationTime = claimsSet.getExpirationTime();
+
+      if (expirationTime.before(new Date())) {
+        throw new RuntimeException("JWT 만료");
+      }
+
       return claimsSet.getClaims();
     } catch (Exception e) {
       throw new RuntimeException("JWT 파싱 실패", e);

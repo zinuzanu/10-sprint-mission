@@ -49,7 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   }
 
   private void setAuthenticationToContext(Map<String, Object> claims) {
-    String email = (String) claims.get("username");
+    String email = (String) claims.get("sub");
     List<String> roles = (List<String>) claims.get("roles");
 
     List<GrantedAuthority> authorities = new ArrayList<>();

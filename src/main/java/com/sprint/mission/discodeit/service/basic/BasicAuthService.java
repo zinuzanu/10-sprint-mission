@@ -1,36 +1,84 @@
 package com.sprint.mission.discodeit.service.basic;
 
+import com.sprint.mission.discodeit.dto.JwtDto;
+import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.entity.RefreshToken;
 import com.sprint.mission.discodeit.service.AuthService;
-import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
-import java.util.UUID;
+import com.sprint.mission.discodeit.service.UserService;
+import com.sprint.mission.discodeit.service.auth.JwtTokenProvider;
+import com.sprint.mission.discodeit.service.auth.RefreshTokenService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.session.SessionInformation;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class BasicAuthService implements AuthService {
 
-  private final SessionRegistry sessionRegistry;
+  private final JwtTokenProvider jwtTokenProvider;
+  private final RefreshTokenService refreshTokenService;
+  private final UserService userService;
 
   @Override
-  public void expireUserSessions(UUID userId) {
-    for (Object principal : sessionRegistry.getAllPrincipals()) {
-      if (principal instanceof DiscodeitUserDetails userDetails) {
-        if (userDetails.getUserDto().getId().equals(userId)) {
-          sessionRegistry.getAllSessions(principal, false)
-              .forEach(SessionInformation::expireNow);
-        }
-      }
-    }
-  }
+  public JwtDto refresh(String refreshToken, HttpServletResponse response) {
 
-  @Override
-  public boolean isUserOnline(UUID userId) {
-    return sessionRegistry.getAllPrincipals().stream()
-        .filter(principal -> principal instanceof DiscodeitUserDetails)
-        .map(principal -> (DiscodeitUserDetails) principal)
-        .anyMatch(userDetails -> userDetails.getUserDto().getId().equals(userId));
+    Map<String, Object> claims =
+        jwtTokenProvider.getClaims(refreshToken);
+
+    String email = (String) claims.get("sub");
+
+    RefreshToken savedRefreshToken =
+        refreshTokenService.findByToken(refreshToken);
+
+    refreshTokenService.validate(savedRefreshToken);
+
+    UserDto userDto =
+        userService.findByEmail(email);
+
+    List<String> roles =
+        List.of("ROLE_" + userDto.getRole().name());
+
+    Map<String, Object> accessClaims =
+        new HashMap<>();
+
+    accessClaims.put("username", email);
+    accessClaims.put("roles", roles);
+
+    String newAccessToken =
+        jwtTokenProvider.generateAccessToken(
+            accessClaims,
+            email
+        );
+
+    String newRefreshToken =
+        jwtTokenProvider.generateRefreshToken(email);
+
+    refreshTokenService.rotate(
+        savedRefreshToken.getUserId(),
+        newRefreshToken
+    );
+
+    Cookie refreshTokenCookie =
+        new Cookie("REFRESH_TOKEN", newRefreshToken);
+
+    refreshTokenCookie.setHttpOnly(true);
+    refreshTokenCookie.setSecure(false);
+    refreshTokenCookie.setAttribute("SameSite", "Strict");
+    refreshTokenCookie.setPath("/");
+    refreshTokenCookie.setMaxAge(
+        jwtTokenProvider.getRefreshTokenExpirationMinutes()
+            * 60
+    );
+
+    response.addCookie(refreshTokenCookie);
+
+    return JwtDto.builder()
+        .userDto(userDto)
+        .accessToken(newAccessToken)
+        .build();
   }
 }

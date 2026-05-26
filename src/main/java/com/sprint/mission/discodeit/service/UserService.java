@@ -15,6 +15,8 @@ public interface UserService {
 
   UserDto findById(UUID id);
 
+  UserDto findByEmail(String email);
+
   List<UserDto> findAllUsers();
 
   List<UserDto> findAllByChannelId(UUID channelId);

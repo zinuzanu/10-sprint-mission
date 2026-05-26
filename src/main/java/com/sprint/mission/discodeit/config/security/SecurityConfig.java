@@ -1,5 +1,6 @@
 package com.sprint.mission.discodeit.config.security;
 
+import com.sprint.mission.discodeit.service.auth.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -13,15 +14,13 @@ import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
 @EnableMethodSecurity
@@ -31,9 +30,10 @@ public class SecurityConfig {
   private final JwtLoginSuccessHandler jwtLoginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
   private final UserDetailsService userDetailsService;
+  private final JwtTokenProvider jwtTokenProvider;
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http, SessionRegistry sessionRegistry)
+  public SecurityFilterChain filterChain(HttpSecurity http)
       throws Exception {
     http
         .csrf(csrf -> csrf
@@ -43,7 +43,10 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/error").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-            .requestMatchers("/api/auth/csrf-token").permitAll()
+            .requestMatchers(
+                "/api/auth/csrf-token",
+                "/api/auth/refresh"
+            ).permitAll()
             .requestMatchers(
                 "/",
                 "/favicon.ico",
@@ -71,18 +74,17 @@ public class SecurityConfig {
             .failureHandler(loginFailureHandler)
             .permitAll()
         )
-        .rememberMe(rememberMe -> rememberMe
-            .rememberMeParameter("remember-me")
-            .tokenValiditySeconds(60 * 60 * 24 * 7)
-            .userDetailsService(userDetailsService)
-        )
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
-            .deleteCookies("JSESSIONID", "remember-me")
+            .deleteCookies("REFRESH_TOKEN")
             .invalidateHttpSession(true)
             .permitAll()
+        )
+        .addFilterBefore(
+            new JwtAuthenticationFilter(jwtTokenProvider),
+            UsernamePasswordAuthenticationFilter.class
         );
     return http.build();
   }
@@ -101,16 +103,6 @@ public class SecurityConfig {
     DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
     handler.setRoleHierarchy(roleHierarchy);
     return handler;
-  }
-
-  @Bean
-  public HttpSessionEventPublisher httpSessionEventPublisher() {
-    return new HttpSessionEventPublisher();
-  }
-
-  @Bean
-  public SessionRegistry sessionRegistry() {
-    return new SessionRegistryImpl();
   }
 
   @Bean
