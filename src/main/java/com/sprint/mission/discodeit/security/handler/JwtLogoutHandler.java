@@ -6,7 +6,6 @@ import com.sprint.mission.discodeit.service.auth.RefreshTokenService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
@@ -38,14 +37,12 @@ public class JwtLogoutHandler implements LogoutHandler {
         RefreshToken refreshToken =
             refreshTokenService.findByToken(refreshTokenValue);
 
-        UUID userId = refreshToken.getUserId();
+        jwtRegistry.invalidateJwtInformationByUserId(refreshToken.getUserId());
 
-        jwtRegistry.invalidateJwtInformationByUserId(userId);
-
-        refreshTokenService.delete(userId);
+        refreshTokenService.deleteByToken(refreshTokenValue);
 
       } catch (Exception e) {
-        System.err.println("Logout 실패: " + e.getMessage());
+        System.err.println("Logout 무시됨: " + e.getMessage());
       }
 
       Cookie deleteCookie = new Cookie("REFRESH_TOKEN", null);

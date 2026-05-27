@@ -12,7 +12,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -46,9 +45,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         setAuthenticationToContext(claims);
 
-      } catch (Exception e) {
+      } catch (DiscodeitException e) {
         SecurityContextHolder.clearContext();
-        request.setAttribute("exception", e);
+
+        response.sendError(
+            HttpServletResponse.SC_UNAUTHORIZED,
+            e.getMessage()
+        );
+
+        return;
       }
     }
 
@@ -67,18 +72,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private void setAuthenticationToContext(Map<String, Object> claims) {
 
-    String email = (String) claims.get("sub");
-    List<String> roles = (List<String>) claims.get("roles");
-    UUID userId = UUID.fromString((String) claims.get("userId"));
+    String email = String.valueOf(claims.get("sub"));
 
-    if (roles == null) {
-      roles = List.of();
-    }
+    List<String> roles =
+        claims.get("roles") == null
+            ? List.of()
+            : ((List<?>) claims.get("roles"))
+                .stream()
+                .map(String::valueOf)
+                .toList();
 
-    List<GrantedAuthority> authorities = new ArrayList<>();
-    for (String role : roles) {
-      authorities.add(new SimpleGrantedAuthority(role));
-    }
+    Object userIdClaim = claims.get("userId");
+
+    UUID userId = userIdClaim == null
+        ? null
+        : UUID.fromString(String.valueOf(userIdClaim));
+
+    List<GrantedAuthority> authorities = roles.stream()
+        .map(role -> (GrantedAuthority) new SimpleGrantedAuthority(role))
+        .toList();
 
     Role role = roles.isEmpty()
         ? null
@@ -90,7 +102,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         .role(role)
         .build();
 
-    DiscodeitUserDetails userDetails = new DiscodeitUserDetails(userDto, null);
+    DiscodeitUserDetails userDetails =
+        new DiscodeitUserDetails(userDto, null);
 
     UsernamePasswordAuthenticationToken authentication =
         new UsernamePasswordAuthenticationToken(
@@ -99,6 +112,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             authorities
         );
 
-    SecurityContextHolder.getContext().setAuthentication(authentication);
+    SecurityContextHolder.getContext()
+        .setAuthentication(authentication);
   }
 }

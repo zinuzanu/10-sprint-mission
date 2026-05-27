@@ -79,7 +79,7 @@ public class RefreshTokenService {
     return refreshTokenRepository.save(refreshToken);
   }
 
-  public void delete(UUID userId) {
-    refreshTokenRepository.deleteByUserId(userId);
+  public void deleteByToken(String token) {
+    refreshTokenRepository.deleteByToken(token);
   }
 }
