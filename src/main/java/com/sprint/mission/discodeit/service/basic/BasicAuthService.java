@@ -3,9 +3,12 @@ package com.sprint.mission.discodeit.service.basic;
 import com.sprint.mission.discodeit.dto.JwtDto;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.entity.RefreshToken;
+import com.sprint.mission.discodeit.exception.DiscodeitException;
+import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
+import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.AuthService;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.auth.RefreshTokenService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +25,7 @@ public class BasicAuthService implements AuthService {
   private final JwtTokenProvider jwtTokenProvider;
   private final RefreshTokenService refreshTokenService;
   private final UserService userService;
+  private final JwtRegistry jwtRegistry;
 
   @Override
   public JwtDto refresh(String refreshToken, HttpServletResponse response) {
@@ -30,6 +34,10 @@ public class BasicAuthService implements AuthService {
         jwtTokenProvider.getClaims(refreshToken);
 
     String email = (String) claims.get("sub");
+
+    if (!jwtRegistry.hasActiveJwtInformationByRefreshToken(refreshToken)) {
+      throw new DiscodeitException(ErrorCode.REVOKED_TOKEN);
+    }
 
     RefreshToken savedRefreshToken =
         refreshTokenService.findByToken(refreshToken);
@@ -47,6 +55,7 @@ public class BasicAuthService implements AuthService {
 
     accessClaims.put("username", email);
     accessClaims.put("roles", roles);
+    accessClaims.put("userId", userDto.getId().toString());
 
     String newAccessToken =
         jwtTokenProvider.generateAccessToken(

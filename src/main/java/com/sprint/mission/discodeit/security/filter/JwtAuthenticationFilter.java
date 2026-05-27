@@ -1,11 +1,12 @@
 package com.sprint.mission.discodeit.security.filter;
 
+import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
-import com.sprint.mission.discodeit.dto.UserDto;
-import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
+import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -67,6 +69,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String email = (String) claims.get("sub");
     List<String> roles = (List<String>) claims.get("roles");
+    UUID userId = UUID.fromString((String) claims.get("userId"));
 
     if (roles == null) {
       roles = List.of();
@@ -77,8 +80,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       authorities.add(new SimpleGrantedAuthority(role));
     }
 
+    Role role = roles.isEmpty()
+        ? null
+        : Role.valueOf(roles.get(0).replace("ROLE_", ""));
+
     UserDto userDto = UserDto.builder()
+        .id(userId)
         .email(email)
+        .role(role)
         .build();
 
     DiscodeitUserDetails userDetails = new DiscodeitUserDetails(userDto, null);

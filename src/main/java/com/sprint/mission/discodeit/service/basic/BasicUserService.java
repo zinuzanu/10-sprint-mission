@@ -18,6 +18,7 @@ import com.sprint.mission.discodeit.repository.BinaryContentRepository;
 import com.sprint.mission.discodeit.repository.ChannelRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
 import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
@@ -44,6 +45,7 @@ public class BasicUserService implements UserService {
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
+  private final JwtRegistry jwtRegistry;
 
   @Transactional
   @Override
@@ -66,18 +68,18 @@ public class BasicUserService implements UserService {
     log.info("[SUCCESS] User Created: id={}, email={}", saved.getId(),
         saved.getEmail());
 
-    return userMapper.toDto(saved);
+    return toDto(saved);
   }
 
   @Override
   public UserDto findById(UUID id) {
-    return userMapper.toDto(findUserEntityById(id));
+    return toDto(findUserEntityById(id));
   }
 
   @Override
   public List<UserDto> findAllUsers() {
     return userRepository.findAllWithDetails().stream()
-        .map(userMapper::toDto)
+        .map(this::toDto)
         .toList();
   }
 
@@ -89,7 +91,7 @@ public class BasicUserService implements UserService {
             new RuntimeException("사용자를 찾을 수 없습니다.")
         );
 
-    return userMapper.toDto(user);
+    return toDto(user);
   }
 
   @Override
@@ -100,7 +102,7 @@ public class BasicUserService implements UserService {
 
     return readStatusRepository.findAllByChannelId(channelId).stream()
         .map(ReadStatus::getUser)
-        .map(userMapper::toDto)
+        .map(this::toDto)
         .toList();
   }
 
@@ -138,7 +140,7 @@ public class BasicUserService implements UserService {
 
     log.info("[SUCCESS] User Updated: id={}, email={}", userId, user.getEmail());
 
-    return userMapper.toDto(user);
+    return toDto(user);
   }
 
   @Transactional
@@ -149,10 +151,12 @@ public class BasicUserService implements UserService {
 
     user.updateRole(request.getNewRole());
 
+    jwtRegistry.invalidateJwtInformationByUserId(user.getId());
+
     log.info("[SUCCESS] User Role Updated: id={}, newRole={}",
         user.getId(), user.getRole());
 
-    return userMapper.toDto(user);
+    return toDto(user);
   }
 
   @Transactional
@@ -184,6 +188,11 @@ public class BasicUserService implements UserService {
     if (userRepository.findByUsername(username).isPresent()) {
       throw new DuplicateUsernameException(username);
     }
+  }
+
+  // 공통 User -> UserDto 변환
+  private UserDto toDto(User user) {
+    return userMapper.toDto(user, jwtRegistry);
   }
 
   // [헬퍼 메서드]: 반복되는 조회 및 예외 처리 공통화
