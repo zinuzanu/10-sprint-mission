@@ -21,6 +21,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
   boolean existsByRole(Role role);
 
+  @EntityGraph(attributePaths = "profile")
+  Optional<User> findWithProfileByUsername(String username);
+
   // 단일 상세 조회 (BasicUserService.findById 등에서 사용)
   @EntityGraph(attributePaths = "profile")
   @Query("SELECT u FROM User u WHERE u.id = :id")

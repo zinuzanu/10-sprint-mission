@@ -6,10 +6,11 @@ CREATE TABLE binary_contents
 (
     id           UUID PRIMARY KEY,
     created_at   TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at   TIMESTAMP WITH TIME ZONE,
     file_name    VARCHAR(255)             NOT NULL,
     size         BIGINT                   NOT NULL,
     content_type VARCHAR(100)             NOT NULL,
-    bytes        BYTEA
+    status       VARCHAR(20)              NOT NULL
 );
 
 -- 유저 테이블

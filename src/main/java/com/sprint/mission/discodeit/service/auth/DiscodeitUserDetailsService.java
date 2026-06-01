@@ -22,7 +22,7 @@ public class DiscodeitUserDetailsService implements UserDetailsService {
   public UserDetails loadUserByUsername(String username)
       throws UsernameNotFoundException {
 
-    return userRepository.findByUsername(username)
+    return userRepository.findWithProfileByUsername(username)
         .map(user -> {
 
           UserDto userDto =

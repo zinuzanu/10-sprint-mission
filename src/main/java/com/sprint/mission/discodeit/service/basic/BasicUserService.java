@@ -7,6 +7,7 @@ import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.ReadStatus;
 import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
@@ -20,12 +21,12 @@ import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.service.UserService;
-import com.sprint.mission.discodeit.storage.BinaryContentStorage;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ public class BasicUserService implements UserService {
   private final UserRepository userRepository;
   private final ChannelRepository channelRepository;
   private final BinaryContentRepository binaryContentRepository;
-  private final BinaryContentStorage binaryContentStorage;
+  private final ApplicationEventPublisher eventPublisher;
   private final ReadStatusRepository readStatusRepository;
   private final UserMapper userMapper;
   private final PasswordEncoder passwordEncoder;
@@ -220,7 +221,13 @@ public class BasicUserService implements UserService {
           file.getContentType()
       );
       BinaryContent saved = binaryContentRepository.save(newImage);
-      binaryContentStorage.put(saved.getId(), file.getBytes());
+
+      eventPublisher.publishEvent(
+          new BinaryContentCreatedEvent(
+              saved.getId(),
+              file.getBytes())
+      );
+
       return saved;
     } catch (IOException e) {
       throw new DiscodeitException(ErrorCode.FILE_SAVE_ERROR);
