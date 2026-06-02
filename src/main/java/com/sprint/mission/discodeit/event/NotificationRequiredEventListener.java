@@ -8,13 +8,13 @@ import com.sprint.mission.discodeit.repository.MessageRepository;
 import com.sprint.mission.discodeit.repository.NotificationRepository;
 import com.sprint.mission.discodeit.repository.ReadStatusRepository;
 import com.sprint.mission.discodeit.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -26,6 +26,7 @@ public class NotificationRequiredEventListener {
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
 
+  @Async
   @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
   public void on(MessageCreatedEvent event) {
 
@@ -58,6 +59,7 @@ public class NotificationRequiredEventListener {
     }
   }
 
+  @Async
   @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
   public void on(RoleUpdatedEvent event) {
 
