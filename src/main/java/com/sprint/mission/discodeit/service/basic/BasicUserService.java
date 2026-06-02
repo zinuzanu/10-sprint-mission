@@ -6,8 +6,10 @@ import com.sprint.mission.discodeit.dto.UserRoleUpdateRequest;
 import com.sprint.mission.discodeit.dto.UserUpdateRequest;
 import com.sprint.mission.discodeit.entity.BinaryContent;
 import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
@@ -150,9 +152,20 @@ public class BasicUserService implements UserService {
   public UserDto updateUserRole(UserRoleUpdateRequest request) {
     User user = findUserEntityById(request.getUserId());
 
+    Role previousRole = user.getRole();
+
     user.updateRole(request.getNewRole());
 
     jwtRegistry.invalidateJwtInformationByUserId(user.getId());
+
+    eventPublisher.publishEvent(
+
+        new RoleUpdatedEvent(
+            user.getId(),
+            previousRole,
+            request.getNewRole()
+        )
+    );
 
     log.info("[SUCCESS] User Role Updated: id={}, newRole={}",
         user.getId(), user.getRole());

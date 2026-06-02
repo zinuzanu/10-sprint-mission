@@ -49,7 +49,11 @@ public enum ErrorCode {
   USER_STATUS_NOT_FOUND(HttpStatus.BAD_REQUEST, "STAT601", "유저 상태 정보를 찾을 수 없습니다."),
   USER_STATUS_ALREADY_EXISTS(HttpStatus.CONFLICT, "STAT602", "해당 유저의 상태 정보가 이미 존재합니다."),
   READ_STATUS_ALREADY_EXISTS(HttpStatus.CONFLICT, "STAT603", "이미 존재하는 읽음 상태입니다."),
-  READ_STATUS_NOT_FOUND(HttpStatus.BAD_REQUEST, "STAT604", "읽음 상태 정보를 찾을 수 없습니다.");
+  READ_STATUS_NOT_FOUND(HttpStatus.BAD_REQUEST, "STAT604", "읽음 상태 정보를 찾을 수 없습니다."),
+
+  // Notification (700~799)
+  NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N701", "알림을 찾을 수 없습니다."),
+  FORBIDDEN_NOTIFICATION_ACCESS(HttpStatus.FORBIDDEN, "N702", "해당 알림에 접근할 권한이 없습니다.");
 
   private final HttpStatus status;
   private final String code;

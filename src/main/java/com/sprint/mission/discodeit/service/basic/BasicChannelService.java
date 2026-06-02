@@ -67,7 +67,7 @@ public class BasicChannelService implements ChannelService {
 
     // 3. 관계 설정 (CascadeType.ALL 설정이 되어 있으므로 addReadStatus만 수행)
     participants.forEach(user -> {
-      ReadStatus rs = new ReadStatus(user, newChannel);
+      ReadStatus rs = new ReadStatus(user, newChannel, true);
       newChannel.addReadStatus(rs);
     });
 
@@ -95,13 +95,9 @@ public class BasicChannelService implements ChannelService {
   @Override
   @Transactional(readOnly = true)
   public List<ChannelDto> findAllByUserId(UUID userId) {
-// 1. 내 채널들을 가져온다.
     List<Channel> channels = channelRepository.findAllVisibleChannelsWithParticipants(userId);
-
-    // 2. 레포지토리에서 (채널ID, 최신시각) 묶음들을 다 가져온다.
     List<Object[]> lastMessageData = messageRepository.findAllLastMessageAt();
 
-    // 3. 찾기 쉽게 맵으로 변환한다. (채널ID -> 시각)
     Map<UUID, Instant> lastMessageMap = lastMessageData.stream()
         .collect(Collectors.toMap(
             obj -> (UUID) obj[0],
@@ -109,7 +105,6 @@ public class BasicChannelService implements ChannelService {
             (existing, replacement) -> existing // 중복 시 기존값 유지
         ));
 
-    // 4. 매퍼한테 재료를 다 던져준다. (N+1 없음!)
     return channels.stream()
         .map(channel -> channelMapper.toDto(
             channel,

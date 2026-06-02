@@ -9,6 +9,7 @@ import com.sprint.mission.discodeit.entity.Channel;
 import com.sprint.mission.discodeit.entity.Message;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
+import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
@@ -67,7 +68,10 @@ public class BasicMessageService implements MessageService {
         request.getContent(),
         attachmentContents
     );
+
     Message saved = messageRepository.saveAndFlush(message);
+
+    eventPublisher.publishEvent(new MessageCreatedEvent(saved.getId()));
 
     log.info("[SUCCESS] Created Message: id={}, channelId={}",
         saved.getId(), channel.getId());

@@ -9,4 +9,6 @@ import lombok.NoArgsConstructor;
 @Schema(description = "읽음 상태 수정 요청")
 public class ReadStatusUpdateRequest {
 
+  @Schema(description = "채널 알림 활성화 여부", example = "true")
+  private Boolean notificationEnabled;
 }

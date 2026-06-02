@@ -45,12 +45,13 @@ CREATE TABLE channels
 -- 읽음 상태 테이블
 CREATE TABLE read_statuses
 (
-    id             UUID PRIMARY KEY,
-    created_at     TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at     TIMESTAMP WITH TIME ZONE,
-    user_id        UUID                     NOT NULL,
-    channel_id     UUID                     NOT NULL,
-    last_active_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    id                   UUID PRIMARY KEY,
+    created_at           TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at           TIMESTAMP WITH TIME ZONE,
+    user_id              UUID                     NOT NULL,
+    channel_id           UUID                     NOT NULL,
+    last_active_at       TIMESTAMP WITH TIME ZONE NOT NULL,
+    notification_enabled BOOLEAN                  NOT NULL,
 
     CONSTRAINT fk_read_status_user
         FOREIGN KEY (user_id)
@@ -105,3 +106,13 @@ CREATE TABLE message_attachments
             ON DELETE CASCADE
 );
 
+-- 알림 테이블
+CREATE TABLE notifications
+(
+    id          UUID PRIMARY KEY,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at  TIMESTAMP WITH TIME ZONE,
+    receiver_id UUID                     NOT NULL,
+    title       VARCHAR(255)             NOT NULL,
+    content     TEXT                     NOT NULL
+);
