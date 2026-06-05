@@ -16,6 +16,7 @@ public enum ErrorCode {
   FILE_SAVE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S102", "파일 저장 중 오류가 발생했습니다."),
   FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "S103", "파일 삭제 중 오류가 발생했습니다."),
   BINARY_CONTENT_NOT_FOUND(HttpStatus.BAD_REQUEST, "S104", "첨부된 파일 정보를 찾을 수 없습니다."),
+  BINARY_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S105", "첨부파일 업로드에 실패했습니다."),
 
   // Auth (200~299)
   LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "A201", "아이디 또는 비밀번호가 일치하지 않습니다."),
@@ -32,6 +33,7 @@ public enum ErrorCode {
   USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "U304", "존재하지 않은 사용자입니다."),
   DUPLICATE_EMAIL(HttpStatus.BAD_REQUEST, "U305", "이미 존재하는 이메일입니다."),
   DUPLICATE_USERNAME(HttpStatus.BAD_REQUEST, "U306", "이미 존재하는 이름입니다."),
+  ADMIN_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U307", "관리자 계정을 찾을 수 없습니다."),
 
   // Channel (400~499)
   INVALID_CHANNEL_NAME(HttpStatus.BAD_REQUEST, "C401", "채널 이름은 공백없이, 2~15자 사이여야 합니다."),
