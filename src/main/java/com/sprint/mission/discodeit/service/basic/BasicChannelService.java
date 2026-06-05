@@ -25,6 +25,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +44,7 @@ public class BasicChannelService implements ChannelService {
 
   @Transactional
   @Override
+  @CacheEvict(value = "userChannels", allEntries = true)
   public ChannelDto createPublicChannel(ChannelCreatePublicRequest request) {
     Channel newChannel = channelMapper.toEntity(request);
     Channel savedPublicChannel = channelRepository.save(newChannel);
@@ -54,6 +57,7 @@ public class BasicChannelService implements ChannelService {
 
   @Transactional
   @Override
+  @CacheEvict(value = "userChannels", allEntries = true)
   public ChannelDto createPrivateChannel(ChannelCreatePrivateRequest request) {
     // 1. 참여자 리스트를 상세 정보와 함께 일괄 조회 (N+1 방지 및 profile null 방지)
     List<User> participants = userRepository.findAllWithDetailsByIdIn(request.getParticipantIds());
@@ -94,6 +98,7 @@ public class BasicChannelService implements ChannelService {
 
   @Override
   @Transactional(readOnly = true)
+  @Cacheable(value = "userChannels", key = "#userId")
   public List<ChannelDto> findAllByUserId(UUID userId) {
     List<Channel> channels = channelRepository.findAllVisibleChannelsWithParticipants(userId);
     List<Object[]> lastMessageData = messageRepository.findAllLastMessageAt();
@@ -116,6 +121,7 @@ public class BasicChannelService implements ChannelService {
 
   @Transactional
   @Override
+  @CacheEvict(value = "userChannels", allEntries = true)
   public ChannelDto update(UUID channelId, ChannelUpdateRequest request) {
     Channel channel = findChannelEntityById(channelId);
 
@@ -136,6 +142,7 @@ public class BasicChannelService implements ChannelService {
 
   @Transactional
   @Override
+  @CacheEvict(value = "userChannels", allEntries = true)
   public void delete(UUID channelId) {
     Channel channel = findChannelEntityById(channelId);
 

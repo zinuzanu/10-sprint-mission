@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,6 +54,7 @@ public class BasicUserService implements UserService {
 
   @Transactional
   @Override
+  @CacheEvict(value = "users", allEntries = true)
   public UserDto create(UserCreateRequest request, MultipartFile profile) {
     validateDuplicateEmail(request.getEmail());
     validateDuplicateUserName(request.getUsername());
@@ -80,6 +83,7 @@ public class BasicUserService implements UserService {
   }
 
   @Override
+  @Cacheable(value = "users")
   public List<UserDto> findAllUsers() {
     return userRepository.findAllWithDetails().stream()
         .map(this::toDto)
@@ -112,6 +116,7 @@ public class BasicUserService implements UserService {
   @Transactional
   @Override
   @PreAuthorize("#userId == authentication.principal.userDto.id")
+  @CacheEvict(value = "users", allEntries = true)
   public UserDto update(UUID userId, UserUpdateRequest request,
       MultipartFile profile) {
     User user = findUserEntityById(userId);
@@ -149,6 +154,7 @@ public class BasicUserService implements UserService {
   @Transactional
   @Override
   @PreAuthorize("hasRole('ADMIN')")
+  @CacheEvict(value = "users", allEntries = true)
   public UserDto updateUserRole(UserRoleUpdateRequest request) {
     User user = findUserEntityById(request.getUserId());
 
@@ -176,6 +182,7 @@ public class BasicUserService implements UserService {
   @Transactional
   @Override
   @PreAuthorize("#userId == authentication.principal.userDto.id")
+  @CacheEvict(value = "users", allEntries = true)
   public void delete(UUID userId) {
 
     User user = findUserEntityById(userId);

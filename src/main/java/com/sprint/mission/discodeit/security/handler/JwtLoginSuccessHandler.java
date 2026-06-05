@@ -5,8 +5,8 @@ import com.sprint.mission.discodeit.dto.JwtDto;
 import com.sprint.mission.discodeit.dto.JwtInformation;
 import com.sprint.mission.discodeit.dto.UserDto;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
-import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
+import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
 import com.sprint.mission.discodeit.service.auth.RefreshTokenService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -32,6 +34,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final JwtTokenProvider jwtTokenProvider;
   private final RefreshTokenService refreshTokenService;
   private final JwtRegistry jwtRegistry;
+  private final CacheManager cacheManager;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -56,6 +59,12 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
         userDto.getId(),
         refreshToken
     );
+
+    Cache cache = cacheManager.getCache("users");
+    
+    if (cache != null) {
+      cache.clear();
+    }
 
     JwtInformation jwtInfo = JwtInformation.builder()
         .userId(userDto.getId())

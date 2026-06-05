@@ -15,6 +15,8 @@ import com.sprint.mission.discodeit.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,7 @@ public class NotificationRequiredEventListener {
   private final ReadStatusRepository readStatusRepository;
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
+  private final CacheManager cacheManager;
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -59,6 +62,14 @@ public class NotificationRequiredEventListener {
 
       notificationRepository.saveAll(notifications);
 
+      Cache cache = cacheManager.getCache("userNotifications");
+
+      if (cache != null) {
+        targets.forEach(
+            rs -> cache.evict(rs.getUser().getId())
+        );
+      }
+
       log.info("[SUCCESS] Message Notification Created: messageId={}", event.messageId());
 
     } catch (Exception e) {
@@ -78,6 +89,12 @@ public class NotificationRequiredEventListener {
       );
 
       notificationRepository.save(notification);
+
+      Cache cache = cacheManager.getCache("userNotifications");
+
+      if (cache != null) {
+        cache.evict(event.userId());
+      }
 
       log.info("[SUCCESS] Role Notification Created: userId={}", event.userId());
 
@@ -112,6 +129,12 @@ public class NotificationRequiredEventListener {
       );
 
       notificationRepository.save(notification);
+
+      Cache cache = cacheManager.getCache("userNotifications");
+
+      if (cache != null) {
+        cache.evict(admin.getId());
+      }
 
       log.info(
           "[SUCCESS] Binary Upload Failure Notification Created: binaryContentId={}",

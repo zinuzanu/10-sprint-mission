@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -22,6 +24,7 @@ public class BasicNotificationService implements NotificationService {
   private final NotificationMapper notificationMapper;
 
   @Override
+  @Cacheable(value = "userNotifications", key = "#receiverId")
   public List<NotificationDto> findAllByReceiverId(UUID receiverId) {
     return notificationRepository.findAllByReceiverId(receiverId).stream()
         .map(notificationMapper::toDto)
@@ -29,6 +32,7 @@ public class BasicNotificationService implements NotificationService {
   }
 
   @Override
+  @CacheEvict(value = "userNotifications", key = "#requesterId")
   public void delete(UUID notificationId, UUID requesterId) {
     Notification notification = notificationRepository.findById(notificationId)
         .orElseThrow(() -> new DiscodeitException(ErrorCode.NOTIFICATION_NOT_FOUND));
