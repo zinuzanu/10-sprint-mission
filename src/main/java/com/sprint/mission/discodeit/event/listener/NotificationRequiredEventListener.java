@@ -25,8 +25,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 @RequiredArgsConstructor
@@ -40,7 +38,8 @@ public class NotificationRequiredEventListener {
   private final CacheManager cacheManager;
 
   @Async
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @EventListener
   public void on(MessageCreatedEvent event) {
 
     try {
@@ -81,7 +80,8 @@ public class NotificationRequiredEventListener {
   }
 
   @Async
-  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @EventListener
   public void on(RoleUpdatedEvent event) {
 
     try {

@@ -14,9 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class BasicNotificationService implements NotificationService {
 
@@ -24,6 +26,7 @@ public class BasicNotificationService implements NotificationService {
   private final NotificationMapper notificationMapper;
 
   @Override
+  @Transactional(readOnly = true)
   @Cacheable(value = "userNotifications", key = "#receiverId")
   public List<NotificationDto> findAllByReceiverId(UUID receiverId) {
     return notificationRepository.findAllByReceiverId(receiverId).stream()
@@ -32,6 +35,7 @@ public class BasicNotificationService implements NotificationService {
   }
 
   @Override
+  @Transactional
   @CacheEvict(value = "userNotifications", key = "#requesterId")
   public void delete(UUID notificationId, UUID requesterId) {
     Notification notification = notificationRepository.findById(notificationId)
