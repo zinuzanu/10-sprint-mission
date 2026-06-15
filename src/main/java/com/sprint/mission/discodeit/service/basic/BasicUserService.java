@@ -10,6 +10,9 @@ import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.entity.User;
 import com.sprint.mission.discodeit.event.BinaryContentCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
+import com.sprint.mission.discodeit.event.UserCreatedEvent;
+import com.sprint.mission.discodeit.event.UserDeletedEvent;
+import com.sprint.mission.discodeit.event.UserUpdatedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
 import com.sprint.mission.discodeit.exception.channel.ChannelNotFoundException;
@@ -70,6 +73,12 @@ public class BasicUserService implements UserService {
     }
 
     User saved = userRepository.save(newUser);
+
+    UserDto userDto = toDto(saved);
+
+    eventPublisher.publishEvent(
+        new UserCreatedEvent(userDto)
+    );
 
     log.info("[SUCCESS] User Created: id={}, email={}", saved.getId(),
         saved.getEmail());
@@ -146,6 +155,12 @@ public class BasicUserService implements UserService {
         newProfile
     );
 
+    UserDto userDto = toDto(user);
+
+    eventPublisher.publishEvent(
+        new UserUpdatedEvent(userDto)
+    );
+
     log.info("[SUCCESS] User Updated: id={}, email={}", userId, user.getEmail());
 
     return toDto(user);
@@ -187,12 +202,18 @@ public class BasicUserService implements UserService {
 
     User user = findUserEntityById(userId);
 
+    UUID deletedUserId = user.getId();
+
     readStatusRepository.deleteByUser(user);
     userRepository.delete(user);
 
     if (user.getProfile() != null) {
       binaryContentRepository.delete(user.getProfile());
     }
+
+    eventPublisher.publishEvent(
+        new UserDeletedEvent(deletedUserId)
+    );
 
     log.info("[SUCCESS] User Deleted: id={}", userId);
   }

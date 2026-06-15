@@ -55,6 +55,7 @@ public class SecurityConfig {
                 "/api/auth/csrf-token",
                 "/api/auth/refresh"
             ).permitAll()
+            .requestMatchers("/api/sse").authenticated()
             .requestMatchers(
                 "/",
                 "/favicon.ico",

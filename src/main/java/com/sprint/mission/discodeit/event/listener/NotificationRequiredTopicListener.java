@@ -2,13 +2,24 @@ package com.sprint.mission.discodeit.event.listener;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sprint.mission.discodeit.entity.*;
+import com.sprint.mission.discodeit.entity.Channel;
+import com.sprint.mission.discodeit.entity.Message;
+import com.sprint.mission.discodeit.entity.Notification;
+import com.sprint.mission.discodeit.entity.ReadStatus;
+import com.sprint.mission.discodeit.entity.Role;
+import com.sprint.mission.discodeit.entity.User;
+import com.sprint.mission.discodeit.event.BinaryUploadFailedEvent;
 import com.sprint.mission.discodeit.event.MessageCreatedEvent;
 import com.sprint.mission.discodeit.event.RoleUpdatedEvent;
-import com.sprint.mission.discodeit.event.BinaryUploadFailedEvent;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
-import com.sprint.mission.discodeit.repository.*;
+import com.sprint.mission.discodeit.mapper.NotificationMapper;
+import com.sprint.mission.discodeit.repository.MessageRepository;
+import com.sprint.mission.discodeit.repository.NotificationRepository;
+import com.sprint.mission.discodeit.repository.ReadStatusRepository;
+import com.sprint.mission.discodeit.repository.UserRepository;
+import com.sprint.mission.discodeit.sse.SseService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
@@ -17,18 +28,18 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class NotificationRequiredTopicListener {
 
   private final ObjectMapper objectMapper;
+  private final NotificationMapper notificationMapper;
   private final MessageRepository messageRepository;
   private final ReadStatusRepository readStatusRepository;
   private final NotificationRepository notificationRepository;
   private final UserRepository userRepository;
+  private final SseService sseService;
   private final CacheManager cacheManager;
 
   @KafkaListener(topics = "discodeit.MessageCreatedEvent")
@@ -59,6 +70,14 @@ public class NotificationRequiredTopicListener {
 
       notificationRepository.saveAll(notifications);
 
+      notifications.forEach(notification ->
+          sseService.send(
+              List.of(notification.getReceiver().getId()),
+              "notifications.created",
+              notificationMapper.toDto(notification)
+          )
+      );
+
       Cache cache = cacheManager.getCache("userNotifications");
       if (cache != null) {
         targets.forEach(rs -> cache.evict(rs.getUser().getId()));
@@ -88,6 +107,12 @@ public class NotificationRequiredTopicListener {
       );
 
       notificationRepository.save(notification);
+
+      sseService.send(
+          List.of(user.getId()),
+          "notifications.created",
+          notificationMapper.toDto(notification)
+      );
 
       Cache cache = cacheManager.getCache("userNotifications");
       if (cache != null) {
@@ -120,6 +145,12 @@ public class NotificationRequiredTopicListener {
       );
 
       notificationRepository.save(notification);
+
+      sseService.send(
+          List.of(admin.getId()),
+          "notifications.created",
+          notificationMapper.toDto(notification)
+      );
 
       Cache cache = cacheManager.getCache("userNotifications");
       if (cache != null) {
