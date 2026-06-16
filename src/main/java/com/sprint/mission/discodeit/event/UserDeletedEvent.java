@@ -1,9 +1,9 @@
 package com.sprint.mission.discodeit.event;
 
-import java.util.UUID;
+import com.sprint.mission.discodeit.dto.UserDto;
 
 public record UserDeletedEvent(
-    UUID userId
+    UserDto user
 ) {
 
 }

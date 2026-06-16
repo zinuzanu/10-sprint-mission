@@ -6,10 +6,8 @@ import com.sprint.mission.discodeit.security.handler.JwtLogoutHandler;
 import com.sprint.mission.discodeit.security.handler.LoginFailureHandler;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
-import com.sprint.mission.discodeit.service.auth.RefreshTokenService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -35,10 +33,9 @@ public class SecurityConfig {
 
   private final JwtLoginSuccessHandler jwtLoginSuccessHandler;
   private final LoginFailureHandler loginFailureHandler;
-  private final RefreshTokenService refreshTokenService;
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtRegistry jwtRegistry;
-  private final CacheManager cacheManager;
+  private final JwtLogoutHandler jwtLogoutHandler;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http)
@@ -85,9 +82,7 @@ public class SecurityConfig {
         )
         .logout(logout -> logout
             .logoutUrl("/api/auth/logout")
-            .addLogoutHandler(
-                new JwtLogoutHandler(jwtRegistry, refreshTokenService, cacheManager)
-            )
+            .addLogoutHandler(jwtLogoutHandler)
             .logoutSuccessHandler(
                 new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)
             )

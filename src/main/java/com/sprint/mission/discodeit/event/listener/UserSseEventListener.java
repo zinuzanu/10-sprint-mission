@@ -4,7 +4,6 @@ import com.sprint.mission.discodeit.event.UserCreatedEvent;
 import com.sprint.mission.discodeit.event.UserDeletedEvent;
 import com.sprint.mission.discodeit.event.UserUpdatedEvent;
 import com.sprint.mission.discodeit.sse.SseService;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -46,9 +45,9 @@ public class UserSseEventListener {
   public void handleUserDeleted(UserDeletedEvent event) {
     sseService.broadcast(
         "users.deleted",
-        Map.of("id", event.userId())
+        event.user()
     );
 
-    log.info("[SUCCESS] SSE User Deleted Sent: id={}", event.userId());
+    log.info("[SUCCESS] SSE User Deleted Sent: id={}", event.user().getId());
   }
 }

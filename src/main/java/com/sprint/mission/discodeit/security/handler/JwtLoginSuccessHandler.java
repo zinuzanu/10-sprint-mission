@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sprint.mission.discodeit.dto.JwtDto;
 import com.sprint.mission.discodeit.dto.JwtInformation;
 import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.event.UserOnlineStatusChangedEvent;
 import com.sprint.mission.discodeit.security.jwt.JwtRegistry;
 import com.sprint.mission.discodeit.security.jwt.JwtTokenProvider;
 import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
@@ -19,6 +20,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -35,6 +37,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
   private final RefreshTokenService refreshTokenService;
   private final JwtRegistry jwtRegistry;
   private final CacheManager cacheManager;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -61,7 +64,7 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
     );
 
     Cache cache = cacheManager.getCache("users");
-    
+
     if (cache != null) {
       cache.clear();
     }
@@ -76,6 +79,8 @@ public class JwtLoginSuccessHandler implements AuthenticationSuccessHandler {
         )
         .build();
     jwtRegistry.registerJwtInformation(jwtInfo);
+
+    eventPublisher.publishEvent(new UserOnlineStatusChangedEvent(userDto.getId()));
 
     Cookie refreshTokenCookie = new Cookie("REFRESH_TOKEN", refreshToken);
     refreshTokenCookie.setHttpOnly(true);

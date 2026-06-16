@@ -4,7 +4,6 @@ import com.sprint.mission.discodeit.event.ChannelCreatedEvent;
 import com.sprint.mission.discodeit.event.ChannelDeletedEvent;
 import com.sprint.mission.discodeit.event.ChannelUpdatedEvent;
 import com.sprint.mission.discodeit.sse.SseService;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -46,9 +45,9 @@ public class ChannelSseEventListener {
   public void handleChannelDeleted(ChannelDeletedEvent event) {
     sseService.broadcast(
         "channels.deleted",
-        Map.of("id", event.channelId())
+        event.channel()
     );
 
-    log.info("[SUCCESS] SSE Channel Deleted Sent: id={}", event.channelId());
+    log.info("[SUCCESS] SSE Channel Deleted Sent: id={}", event.channel().getId());
   }
 }

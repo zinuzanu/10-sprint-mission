@@ -176,7 +176,12 @@ public class BasicChannelService implements ChannelService {
   public void delete(UUID channelId) {
     Channel channel = findChannelEntityById(channelId);
 
-    UUID deletedChannelId = channel.getId();
+    ChannelDto channelDto =
+        channelMapper.toDto(
+            channel,
+            channel.getParticipants(),
+            null
+        );
 
     messageRepository.deleteByChannel(channel);
     readStatusRepository.deleteByChannel(channel);
@@ -184,7 +189,7 @@ public class BasicChannelService implements ChannelService {
     channelRepository.delete(channel);
 
     eventPublisher.publishEvent(
-        new ChannelDeletedEvent(deletedChannelId)
+        new ChannelDeletedEvent(channelDto)
     );
 
     log.info("[SUCCESS] Deleted Channel: id={}", channelId);

@@ -179,8 +179,13 @@ public class BasicUserService implements UserService {
 
     jwtRegistry.invalidateJwtInformationByUserId(user.getId());
 
-    eventPublisher.publishEvent(
+    UserDto userDto = toDto(user);
 
+    eventPublisher.publishEvent(
+        new UserUpdatedEvent(userDto)
+    );
+
+    eventPublisher.publishEvent(
         new RoleUpdatedEvent(
             user.getId(),
             previousRole,
@@ -191,7 +196,7 @@ public class BasicUserService implements UserService {
     log.info("[SUCCESS] User Role Updated: id={}, newRole={}",
         user.getId(), user.getRole());
 
-    return toDto(user);
+    return userDto;
   }
 
   @Transactional
@@ -202,7 +207,7 @@ public class BasicUserService implements UserService {
 
     User user = findUserEntityById(userId);
 
-    UUID deletedUserId = user.getId();
+    UserDto userDto = toDto(user);
 
     readStatusRepository.deleteByUser(user);
     userRepository.delete(user);
@@ -212,7 +217,7 @@ public class BasicUserService implements UserService {
     }
 
     eventPublisher.publishEvent(
-        new UserDeletedEvent(deletedUserId)
+        new UserDeletedEvent(userDto)
     );
 
     log.info("[SUCCESS] User Deleted: id={}", userId);

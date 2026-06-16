@@ -1,9 +1,9 @@
 package com.sprint.mission.discodeit.event;
 
-import java.util.UUID;
+import com.sprint.mission.discodeit.dto.ChannelDto;
 
 public record ChannelDeletedEvent(
-    UUID channelId
+    ChannelDto channel
 ) {
 
 }
