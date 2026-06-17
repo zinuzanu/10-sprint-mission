@@ -50,7 +50,7 @@ CREATE TABLE read_statuses
     updated_at           TIMESTAMP WITH TIME ZONE,
     user_id              UUID                     NOT NULL,
     channel_id           UUID                     NOT NULL,
-    last_active_at       TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_read_at         TIMESTAMP WITH TIME ZONE NOT NULL,
     notification_enabled BOOLEAN                  NOT NULL,
 
     CONSTRAINT fk_read_status_user
@@ -115,4 +115,13 @@ CREATE TABLE notifications
     receiver_id UUID                     NOT NULL,
     title       VARCHAR(255)             NOT NULL,
     content     TEXT                     NOT NULL
+);
+
+-- 리프레시 토큰 테이블
+CREATE TABLE refresh_token
+(
+    id         UUID PRIMARY KEY,
+    token      VARCHAR(255)             NOT NULL UNIQUE,
+    user_id    UUID                     NOT NULL UNIQUE,
+    expired_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
