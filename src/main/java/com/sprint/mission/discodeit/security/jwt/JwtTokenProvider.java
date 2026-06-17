@@ -8,13 +8,22 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.sprint.mission.discodeit.dto.UserDto;
+import com.sprint.mission.discodeit.entity.Role;
 import com.sprint.mission.discodeit.exception.DiscodeitException;
 import com.sprint.mission.discodeit.exception.ErrorCode;
+import com.sprint.mission.discodeit.service.auth.DiscodeitUserDetails;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -110,5 +119,52 @@ public class JwtTokenProvider {
     } catch (Exception e) {
       throw new DiscodeitException(ErrorCode.INVALID_TOKEN);
     }
+  }
+
+  public Authentication getAuthentication(String token) {
+
+    Map<String, Object> claims = getClaims(token);
+
+    String email = String.valueOf(claims.get("sub"));
+
+    List<String> roles =
+        claims.get("roles") == null
+            ? List.of()
+            : ((List<?>) claims.get("roles"))
+                .stream()
+                .map(String::valueOf)
+                .toList();
+
+    Object userIdClaim = claims.get("userId");
+
+    UUID userId = userIdClaim == null
+        ? null
+        : UUID.fromString(String.valueOf(userIdClaim));
+
+    List<GrantedAuthority> authorities = roles.stream()
+        .map(role -> (GrantedAuthority) new SimpleGrantedAuthority(role))
+        .toList();
+
+    Role role = roles.isEmpty()
+        ? null
+        : Role.valueOf(roles.get(0).replace("ROLE_", ""));
+
+    String username = String.valueOf(claims.get("username"));
+
+    UserDto userDto = UserDto.builder()
+        .id(userId)
+        .email(email)
+        .username(username)
+        .role(role)
+        .build();
+
+    DiscodeitUserDetails userDetails =
+        new DiscodeitUserDetails(userDto, null);
+
+    return new UsernamePasswordAuthenticationToken(
+        userDetails,
+        null,
+        authorities
+    );
   }
 }
