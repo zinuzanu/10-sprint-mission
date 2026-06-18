@@ -67,9 +67,10 @@ services:
 
   backend:
     build: .
-    container_name: discodeit-backend
     expose:
       - "8080"
+    deploy:
+      replicas: 3
     depends_on:
       db:
         condition: service_healthy
